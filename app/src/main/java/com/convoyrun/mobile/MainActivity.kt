@@ -27,16 +27,21 @@ import kotlinx.datetime.*
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var prefsManager: PreferencesManager
-    private lateinit var p2pManager: P2pManager
+    private var prefsManager: PreferencesManager? = null
+    private var p2pManager: P2pManager? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        prefsManager = PreferencesManager(applicationContext)
-        p2pManager = P2pManager(applicationContext, prefsManager)
-
-        applyLocaleOverride()
+        try {
+            val prefs = PreferencesManager(applicationContext)
+            prefsManager = prefs
+            p2pManager = P2pManager(applicationContext, prefs)
+            applyLocaleOverride(prefs)
+            android.util.Log.i("MainActivity", "Init OK, nativeLoaded=${P2pManager.nativeLoaded}")
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Init failed: ${e.message}", e)
+        }
 
         setContent {
             ConvoyRunTheme {
@@ -47,25 +52,29 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        lifecycleScope.launch {
-            p2pManager.start()
+        p2pManager?.let { mgr ->
+            lifecycleScope.launch {
+                mgr.start()
+            }
         }
     }
 
     override fun onStop() {
         super.onStop()
-        lifecycleScope.launch {
-            p2pManager.stop()
+        p2pManager?.let { mgr ->
+            lifecycleScope.launch {
+                mgr.stop()
+            }
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        p2pManager.destroy()
+        p2pManager?.destroy()
     }
 
-    private fun applyLocaleOverride() {
-        val lang = prefsManager.getAppLanguage()
+    private fun applyLocaleOverride(prefs: PreferencesManager) {
+        val lang = prefs.getAppLanguage()
         if (lang != null) {
             val locales = LocaleListCompat.forLanguageTags(lang)
             AppCompatDelegate.setApplicationLocales(locales)
@@ -74,10 +83,10 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun ConvoyRunApp(p2pManager: P2pManager, prefsManager: PreferencesManager) {
+fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
     var showSettings by remember { mutableStateOf(false) }
 
-    if (showSettings) {
+    if (showSettings && p2pManager != null && prefsManager != null) {
         SettingsScreen(
             prefsManager = prefsManager,
             p2pManager = p2pManager,
@@ -86,9 +95,9 @@ fun ConvoyRunApp(p2pManager: P2pManager, prefsManager: PreferencesManager) {
         return
     }
 
-    val status by p2pManager.status.collectAsStateWithLifecycle()
-    val peerCount by p2pManager.peerCount.collectAsStateWithLifecycle()
-    val events by p2pManager.events.collectAsStateWithLifecycle()
+    val status = p2pManager?.status?.collectAsStateWithLifecycle()
+    val peerCount = p2pManager?.peerCount?.collectAsStateWithLifecycle()
+    val events = p2pManager?.events?.collectAsStateWithLifecycle()
 
     var selectedDay by remember {
         mutableStateOf(
@@ -99,8 +108,8 @@ fun ConvoyRunApp(p2pManager: P2pManager, prefsManager: PreferencesManager) {
     }
     var selectedEvent by remember { mutableStateOf<ConvoyEvent?>(null) }
 
-    val dayEvents = remember(selectedDay, events) {
-        p2pManager.getEventsForDate(selectedDay)
+    val dayEvents = remember(selectedDay, events?.value) {
+        p2pManager?.getEventsForDate(selectedDay) ?: emptyList()
     }
 
     Scaffold(
@@ -128,8 +137,8 @@ fun ConvoyRunApp(p2pManager: P2pManager, prefsManager: PreferencesManager) {
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     StatusIndicator(
-                        status = status,
-                        peerCount = peerCount
+                        status = status?.value ?: P2pManager.Status.OFFLINE,
+                        peerCount = peerCount?.value ?: 0
                     )
                     IconButton(
                         onClick = { showSettings = true },
@@ -153,7 +162,7 @@ fun ConvoyRunApp(p2pManager: P2pManager, prefsManager: PreferencesManager) {
                 .padding(paddingValues)
         ) {
             CalendarView(
-                events = events,
+                events = events?.value ?: emptyList(),
                 onDaySelected = { selectedDay = it },
                 selectedDay = selectedDay,
                 modifier = Modifier
@@ -178,7 +187,7 @@ fun ConvoyRunApp(p2pManager: P2pManager, prefsManager: PreferencesManager) {
             event = event,
             onDismiss = { selectedEvent = null },
             onBlockAuthor = { peerId, nick ->
-                p2pManager.blockAuthor(peerId, nick)
+                p2pManager?.blockAuthor(peerId, nick)
                 selectedEvent = null
             }
         )

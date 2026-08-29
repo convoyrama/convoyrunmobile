@@ -281,9 +281,15 @@ class P2pManager(
     }
 
     companion object {
-        // JNI initialization
+        var nativeLoaded = false
         init {
-            System.loadLibrary("convoyrun_mobile_ffi")
+            try {
+                System.loadLibrary("convoyrun_mobile_ffi")
+                nativeLoaded = true
+                android.util.Log.i("P2pManager", "Native library loaded successfully")
+            } catch (e: Exception) {
+                android.util.Log.e("P2pManager", "Failed to load native library: ${e.message}", e)
+            }
         }
     }
 }
