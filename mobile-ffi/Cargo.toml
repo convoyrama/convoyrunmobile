@@ -10,6 +10,10 @@ name = "convoyrun_mobile_ffi"
 crate-type = ["cdylib", "staticlib"]
 path = "src/lib.rs"
 
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi-bindgen.rs"
+
 [dependencies]
 # Core iroh (transport + networking)
 iroh = "1.0"

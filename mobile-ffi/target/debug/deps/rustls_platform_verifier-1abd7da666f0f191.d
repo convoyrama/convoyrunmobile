@@ -1,8 +1,0 @@
-/home/usuario/Documentos/GitHub/dr.will/ConvoyRun/convoyrunmobile/mobile-ffi/target/debug/deps/rustls_platform_verifier-1abd7da666f0f191.d: /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-platform-verifier-0.7.0/src/lib.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-platform-verifier-0.7.0/src/verification/mod.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-platform-verifier-0.7.0/src/verification/others.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-platform-verifier-0.7.0/src/../README.md
-
-/home/usuario/Documentos/GitHub/dr.will/ConvoyRun/convoyrunmobile/mobile-ffi/target/debug/deps/librustls_platform_verifier-1abd7da666f0f191.rmeta: /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-platform-verifier-0.7.0/src/lib.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-platform-verifier-0.7.0/src/verification/mod.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-platform-verifier-0.7.0/src/verification/others.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-platform-verifier-0.7.0/src/../README.md
-
-/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-platform-verifier-0.7.0/src/lib.rs:
-/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-platform-verifier-0.7.0/src/verification/mod.rs:
-/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-platform-verifier-0.7.0/src/verification/others.rs:
-/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-platform-verifier-0.7.0/src/../README.md:
