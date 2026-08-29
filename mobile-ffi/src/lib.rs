@@ -13,6 +13,7 @@ use std::sync::Arc;
 uniffi::setup_scaffolding!();
 
 /// Initialize the Android context (fallback for non-Android builds)
+#[cfg(not(target_os = "android"))]
 pub fn init_android_context_fallback() {
     android_init::init_android_context_fallback();
 }
