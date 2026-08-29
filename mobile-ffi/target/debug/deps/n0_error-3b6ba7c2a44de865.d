@@ -1,0 +1,11 @@
+/home/usuario/Documentos/GitHub/dr.will/ConvoyRun/convoyrunmobile/mobile-ffi/target/debug/deps/n0_error-3b6ba7c2a44de865.d: /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/lib.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/any.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/error.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/ext.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/macros.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/meta.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/../examples/basic.rs
+
+/home/usuario/Documentos/GitHub/dr.will/ConvoyRun/convoyrunmobile/mobile-ffi/target/debug/deps/libn0_error-3b6ba7c2a44de865.rmeta: /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/lib.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/any.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/error.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/ext.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/macros.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/meta.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/../examples/basic.rs
+
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/lib.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/any.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/error.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/ext.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/macros.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/meta.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/n0-error-1.0.0/src/../examples/basic.rs:

@@ -1,0 +1,11 @@
+/home/usuario/Documentos/GitHub/dr.will/ConvoyRun/convoyrunmobile/mobile-ffi/target/debug/deps/sec1-46b922f5b31f419f.d: /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/lib.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/point.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/error.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/parameters.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/private_key.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/traits.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/../README.md
+
+/home/usuario/Documentos/GitHub/dr.will/ConvoyRun/convoyrunmobile/mobile-ffi/target/debug/deps/libsec1-46b922f5b31f419f.rmeta: /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/lib.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/point.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/error.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/parameters.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/private_key.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/traits.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/../README.md
+
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/lib.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/point.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/error.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/parameters.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/private_key.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/traits.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sec1-0.7.3/src/../README.md:

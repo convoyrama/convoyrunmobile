@@ -1,0 +1,124 @@
+name: Build Android & Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Publish GitHub Release with APK'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        id: get_version
+        run: |
+          VERSION=$(grep 'versionName' app/build.gradle.kts | sed -E 's/.*"(.*)".*/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Building ConvoyRun Mobile v$VERSION"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './mobile-ffi -> target'
+
+      - name: Setup Android SDK & NDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'ndk;28.0.12433566'
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk
+
+      - name: Generate launcher icons
+        run: |
+          SRC="mobile-ffi/icons/icon.png"
+          RES="app/src/main/res"
+          SIZES="mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192"
+
+          for entry in $SIZES; do
+            DENSITY=${entry%%:*}
+            SIZE=${entry##*:}
+            mkdir -p "$RES/mipmap-$DENSITY"
+            magick "$SRC" -resize ${SIZE}x${SIZE} "$RES/mipmap-$DENSITY/ic_launcher.png"
+            # Round icon: circle crop
+            magick "$SRC" -resize ${SIZE}x${SIZE} -gravity center -crop ${SIZE}x${SIZE}+0+0 \
+              \( +clone -threshold -1 -negate -fill white -draw "circle $((SIZE/2)),$((SIZE/2)) $((SIZE/2)),0" \) \
+              -alpha off -compose CopyOpacity -composite "$RES/mipmap-$DENSITY/ic_launcher_round.png"
+          done
+          echo "Icons generated"
+
+      - name: Build Rust FFI (arm64-v8a)
+        working-directory: mobile-ffi
+        run: cargo ndk -t arm64-v8a -o ./jniLibs build --release
+
+      - name: Build Rust FFI (armeabi-v7a)
+        working-directory: mobile-ffi
+        run: cargo ndk -t armeabi-v7a -o ./jniLibs build --release
+
+      - name: Generate UniFFI Kotlin bindings
+        working-directory: mobile-ffi
+        run: |
+          cargo run --bin uniffi-bindgen generate \
+            --library target/aarch64-linux-android/release/libconvoyrun_mobile_ffi.so \
+            --language kotlin \
+            --out-dir ../app/src/main/java/com/convoyrun/mobile/ffi
+
+      - name: Build unsigned APK
+        run: ./gradlew assembleRelease
+
+      - name: Collect APK
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/release/app-release-unsigned.apk \
+            "dist/ConvoyRun-Mobile-${{ steps.get_version.outputs.version }}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ConvoyRun-Mobile-${{ steps.get_version.outputs.version }}
+          path: dist/*
+
+  release:
+    needs: build
+    if: github.event.inputs.create_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        id: get_version
+        run: |
+          VERSION=$(grep 'versionName' app/build.gradle.kts | sed -E 's/.*"(.*)".*/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ConvoyRun-Mobile-*
+          merge-multiple: true
+          path: dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mobile-v${{ steps.get_version.outputs.version }}
+          name: ConvoyRun Mobile v${{ steps.get_version.outputs.version }}
+          files: dist/*
+          generate_release_notes: true

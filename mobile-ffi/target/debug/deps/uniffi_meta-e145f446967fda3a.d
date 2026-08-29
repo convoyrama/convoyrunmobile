@@ -1,0 +1,10 @@
+/home/usuario/Documentos/GitHub/dr.will/ConvoyRun/convoyrunmobile/mobile-ffi/target/debug/deps/uniffi_meta-e145f446967fda3a.d: /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/lib.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/ffi_names.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/group.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/reader.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/types.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/metadata.rs
+
+/home/usuario/Documentos/GitHub/dr.will/ConvoyRun/convoyrunmobile/mobile-ffi/target/debug/deps/libuniffi_meta-e145f446967fda3a.rmeta: /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/lib.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/ffi_names.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/group.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/reader.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/types.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/metadata.rs
+
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/lib.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/ffi_names.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/group.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/reader.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/types.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uniffi_meta-0.31.2/src/metadata.rs:

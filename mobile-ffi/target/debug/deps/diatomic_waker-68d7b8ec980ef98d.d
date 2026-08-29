@@ -1,0 +1,10 @@
+/home/usuario/Documentos/GitHub/dr.will/ConvoyRun/convoyrunmobile/mobile-ffi/target/debug/deps/diatomic_waker-68d7b8ec980ef98d.d: /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/lib.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/arc_waker.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/borrowed_waker.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/loom_exports.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/primitives.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/waker.rs
+
+/home/usuario/Documentos/GitHub/dr.will/ConvoyRun/convoyrunmobile/mobile-ffi/target/debug/deps/libdiatomic_waker-68d7b8ec980ef98d.rmeta: /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/lib.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/arc_waker.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/borrowed_waker.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/loom_exports.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/primitives.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/waker.rs
+
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/lib.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/arc_waker.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/borrowed_waker.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/loom_exports.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/primitives.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/diatomic-waker-0.2.3/src/waker.rs:

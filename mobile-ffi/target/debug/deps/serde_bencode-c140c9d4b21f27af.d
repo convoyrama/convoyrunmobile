@@ -1,0 +1,10 @@
+/home/usuario/Documentos/GitHub/dr.will/ConvoyRun/convoyrunmobile/mobile-ffi/target/debug/deps/serde_bencode-c140c9d4b21f27af.d: /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/lib.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/de.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/error.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/ser.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/ser/string.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/value.rs
+
+/home/usuario/Documentos/GitHub/dr.will/ConvoyRun/convoyrunmobile/mobile-ffi/target/debug/deps/libserde_bencode-c140c9d4b21f27af.rmeta: /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/lib.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/de.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/error.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/ser.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/ser/string.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/value.rs
+
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/lib.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/de.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/error.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/ser.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/ser/string.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_bencode-0.2.4/src/value.rs:

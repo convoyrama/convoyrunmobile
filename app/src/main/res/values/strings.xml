@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_title">ConvoyRun</string>
+    <string name="app_subtitle">Convoy &amp; Event Manager</string>
+
+    <!-- Status -->
+    <string name="status_online">Online</string>
+    <string name="status_searching">Searching…</string>
+    <string name="status_offline">Offline</string>
+
+    <!-- Navigation -->
+    <string name="tab_calendar">Calendar</string>
+    <string name="tab_list">List</string>
+
+    <!-- Filters -->
+    <string name="filter_all">All</string>
+    <string name="search_events">Search events…</string>
+    <string name="no_events">No events for this day</string>
+
+    <!-- Event Details -->
+    <string name="event_details">Event Details</string>
+    <string name="detail_meeting">Meeting Time</string>
+    <string name="detail_route">Route</string>
+    <string name="detail_server">Server</string>
+    <string name="detail_description">Description</string>
+    <string name="detail_languages">Languages</string>
+    <string name="detail_link">Link</string>
+    <string name="detail_creator">Created by</string>
+    <string name="detail_flyer">Event Flyer</string>
+
+    <!-- Actions -->
+    <string name="share">Share</string>
+    <string name="close">Close</string>
+</resources>

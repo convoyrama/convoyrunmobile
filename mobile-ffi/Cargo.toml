@@ -1,0 +1,57 @@
+[package]
+name = "convoyrun-mobile-ffi"
+version = "0.1.0"
+edition = "2021"
+description = "ConvoyRun Mobile FFI - iroh P2P layer for Android"
+license = "MIT OR Apache-2.0"
+
+[lib]
+name = "convoyrun_mobile_ffi"
+crate-type = ["cdylib", "staticlib"]
+path = "src/lib.rs"
+
+[dependencies]
+# Core iroh (transport + networking)
+iroh = "1.0"
+iroh-base = "1.0"
+iroh-tickets = "1.0"
+
+# Gossip protocol (topic subscription + broadcast)
+iroh-gossip = "0.101"
+
+# DHT peer discovery (Mainline DHT, same as desktop)
+distributed-topic-tracker = "0.3.5"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "2.0"
+
+# Crypto (for signature verification)
+ed25519-dalek = "3.0"
+base64 = "0.22"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+n0-future = "0.3"
+futures-lite = "2.3"
+chrono = "0.4"
+
+# UniFFI bindings generation
+uniffi = { version = "0.31", features = ["cli", "scaffolding-ffi-buffer-fns"] }
+
+# Android JNI support
+[target.'cfg(target_os = "android")'.dependencies]
+ndk-context = "0.1"
+jni = "0.22"
+
+[build-dependencies]
+uniffi = { version = "0.31", features = ["build"] }
+
+[profile.release]
+lto = true
+opt-level = "s"
+strip = true

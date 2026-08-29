@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.ConvoyRun" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/bg_secondary</item>
+        <item name="android:navigationBarColor">@color/bg_secondary</item>
+        <item name="android:windowBackground">@color/bg_primary</item>
+    </style>
+
+    <color name="accent">#FF00AAFF</color>
+    <color name="bg_primary">#FF1A1A2E</color>
+    <color name="bg_secondary">#FF16213E</color>
+    <color name="text_primary">#FFE0E0E0</color>
+    <color name="text_secondary">#FF8899AA</color>
+</resources>

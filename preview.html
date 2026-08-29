@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConvoyRun Mobile — Preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #00aaff;
+            --accent-dark: #0088cc;
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: #1e2a4a;
+            --bg-card-hover: #243050;
+            --text-primary: #e0e0e0;
+            --text-secondary: #8899aa;
+            --text-muted: #667788;
+            --divider: #2a3a5a;
+            --status-online: #4caf50;
+            --status-searching: #ffc107;
+            --status-offline: #757575;
+            --event-convoy: #00aaff;
+            --event-truckshow: #ff9800;
+            --event-exploration: #4caf50;
+            --event-competition: #f44336;
+            --event-cruise: #9c27b0;
+            --game-ats: #2196f3;
+            --game-ets2: #ff9800;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .page-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 1px;
+        }
+
+        .subtitle-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: -12px;
+        }
+
+        /* Phone frame */
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            border-radius: 40px;
+            border: 3px solid #333;
+            background: #000;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Status bar (system) */
+        .status-bar {
+            height: 44px;
+            background: var(--bg-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .status-bar-left { font-weight: 700; }
+        .status-bar-right { display: flex; gap: 6px; align-items: center; }
+        .status-bar-right svg { width: 16px; height: 16px; fill: var(--text-primary); }
+
+        /* App header */
+        .app-header {
+            background: var(--bg-secondary);
+            padding: 8px 16px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .app-brand {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .app-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: 0.5px;
+            line-height: 1.1;
+        }
+
+        .app-subtitle {
+            font-size: 0.65rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            letter-spacing: 0.3px;
+        }
+
+        /* Status indicator */
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--status-online);
+            box-shadow: 0 0 6px var(--status-online);
+        }
+
+        .status-dot.searching {
+            background: var(--status-searching);
+            box-shadow: 0 0 6px var(--status-searching);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .status-dot.offline {
+            background: var(--status-offline);
+            box-shadow: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        .status-text {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Content area */
+        .content {
+            flex: 1;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Calendar section */
+        .calendar-section {
+            flex: 1;
+            padding: 12px;
+            overflow: hidden;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .calendar-month {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        .calendar-nav button {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid var(--divider);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .calendar-nav button:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-size: 0.55rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding: 4px 0;
+            letter-spacing: 0.5px;
+        }
+
+        .calendar-day {
+            text-align: center;
+            padding: 6px 2px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.15s;
+        }
+
+        .calendar-day:hover {
+            background: var(--bg-card);
+        }
+
+        .calendar-day.today {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .calendar-day.selected {
+            background: var(--accent);
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .calendar-day.other-month {
+            color: var(--text-muted);
+            opacity: 0.4;
+        }
+
+        .calendar-day.has-event::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        .calendar-day.selected.has-event::after {
+            background: #fff;
+        }
+
+        /* Divider */
+        .section-divider {
+            height: 1px;
+            background: var(--divider);
+            margin: 0 12px;
+        }
+
+        /* Event list section */
+        .event-list-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .event-list-header {
+            padding: 10px 16px 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .event-list-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .event-list-count {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        .event-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 12px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* Event card */
+        .event-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 12px;
+            border-left: 3px solid var(--event-convoy);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .event-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateX(2px);
+        }
+
+        .event-card.type-truckshow { border-left-color: var(--event-truckshow); }
+        .event-card.type-exploration { border-left-color: var(--event-exploration); }
+        .event-card.type-competition { border-left-color: var(--event-competition); }
+        .event-card.type-cruise { border-left-color: var(--event-cruise); }
+
+        .event-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 6px;
+        }
+
+        .event-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .event-game-badge {
+            font-size: 0.55rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+
+        .event-game-badge.ats {
+            background: rgba(33, 150, 243, 0.2);
+            color: var(--game-ats);
+        }
+
+        .event-game-badge.ets2 {
+            background: rgba(255, 152, 0, 0.2);
+            color: var(--game-ets2);
+        }
+
+        .event-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .event-time {
+            font-size: 0.7rem;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .event-route {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+        }
+
+        .event-route .arrow {
+            color: var(--accent);
+            margin: 0 4px;
+        }
+
+        .event-tags {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .event-tag {
+            font-size: 0.55rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.06);
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .event-tag.mode {
+            background: rgba(0, 170, 255, 0.1);
+            color: var(--accent);
+        }
+
+        /* Bottom nav (optional) */
+        .bottom-nav {
+            height: 48px;
+            background: var(--bg-secondary);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            font-size: 0.55rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .bottom-nav-item.active {
+            color: var(--accent);
+        }
+
+        .bottom-nav-item svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Home indicator */
+        .home-indicator {
+            height: 20px;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .home-indicator-bar {
+            width: 120px;
+            height: 4px;
+            border-radius: 2px;
+            background: #555;
+        }
+
+        /* Scrollbar */
+        .event-list::-webkit-scrollbar { width: 3px; }
+        .event-list::-webkit-scrollbar-track { background: transparent; }
+        .event-list::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 3px; }
+
+        /* Second phone - event detail */
+        .phones-row {
+            display: flex;
+            gap: 32px;
+            align-items: flex-start;
+        }
+
+        .phone-label {
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 12px;
+        }
+
+        /* Detail overlay */
+        .detail-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            z-index: 10;
+        }
+
+        .detail-sheet {
+            background: var(--bg-secondary);
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            max-height: 75%;
+            overflow-y: auto;
+        }
+
+        .detail-handle {
+            width: 36px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--divider);
+            margin: 0 auto 16px;
+        }
+
+        .detail-event-name {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .detail-event-type {
+            font-size: 0.7rem;
+            color: var(--accent);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .detail-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .detail-row-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(0, 170, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 0.85rem;
+        }
+
+        .detail-row-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .detail-row-label {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .detail-row-value {
+            font-size: 0.8rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .detail-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .detail-btn.primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .detail-btn.secondary {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-secondary);
+        }
+
+        .detail-btn:hover { opacity: 0.85; }
+
+        /* Status bar variant */
+        .status-bar .status-dot-sm {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--status-online);
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <h1>ConvoyRun Mobile</h1>
+        <p class="subtitle-label">UI Preview</p>
+
+        <div class="phones-row">
+            <!-- Phone 1: Main view -->
+            <div>
+                <div class="phone-frame">
+                    <!-- System status bar -->
+                    <div class="status-bar">
+                        <span class="status-bar-left">9:41</span>
+                        <div class="status-bar-right">
+                            <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+                            <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                        </div>
+                    </div>
+
+                    <!-- App header -->
+                    <div class="app-header">
+                        <div class="app-brand">
+                            <span class="app-title">ConvoyRun</span>
+                            <span class="app-subtitle">Convoy & Event Manager</span>
+                        </div>
+                        <div class="status-indicator">
+                            <div class="status-dot"></div>
+                            <span class="status-text">Online (5)</span>
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="content">
+                        <!-- Calendar -->
+                        <div class="calendar-section">
+                            <div class="calendar-header">
+                                <span class="calendar-month">August 2026</span>
+                                <div class="calendar-nav">
+                                    <button>&lsaquo;</button>
+                                    <button>&rsaquo;</button>
+                                </div>
+                            </div>
+                            <div class="calendar-grid">
+                                <div class="calendar-day-header">Su</div>
+                                <div class="calendar-day-header">Mo</div>
+                                <div class="calendar-day-header">Tu</div>
+                                <div class="calendar-day-header">We</div>
+                                <div class="calendar-day-header">Th</div>
+                                <div class="calendar-day-header">Fr</div>
+                                <div class="calendar-day-header">Sa</div>
+
+                                <div class="calendar-day other-month">26</div>
+                                <div class="calendar-day other-month">27</div>
+                                <div class="calendar-day other-month">28</div>
+                                <div class="calendar-day other-month">29</div>
+                                <div class="calendar-day other-month">30</div>
+                                <div class="calendar-day other-month">31</div>
+                                <div class="calendar-day">1</div>
+
+                                <div class="calendar-day">2</div>
+                                <div class="calendar-day has-event">3</div>
+                                <div class="calendar-day">4</div>
+                                <div class="calendar-day">5</div>
+                                <div class="calendar-day has-event">6</div>
+                                <div class="calendar-day">7</div>
+                                <div class="calendar-day">8</div>
+
+                                <div class="calendar-day">9</div>
+                                <div class="calendar-day has-event">10</div>
+                                <div class="calendar-day">11</div>
+                                <div class="calendar-day">12</div>
+                                <div class="calendar-day">13</div>
+                                <div class="calendar-day has-event">14</div>
+                                <div class="calendar-day">15</div>
+
+                                <div class="calendar-day">16</div>
+                                <div class="calendar-day">17</div>
+                                <div class="calendar-day">18</div>
+                                <div class="calendar-day has-event">19</div>
+                                <div class="calendar-day">20</div>
+                                <div class="calendar-day">21</div>
+                                <div class="calendar-day">22</div>
+
+                                <div class="calendar-day">23</div>
+                                <div class="calendar-day has-event">24</div>
+                                <div class="calendar-day">25</div>
+                                <div class="calendar-day selected today">26</div>
+                                <div class="calendar-day">27</div>
+                                <div class="calendar-day">28</div>
+                                <div class="calendar-day">29</div>
+
+                                <div class="calendar-day">30</div>
+                                <div class="calendar-day">31</div>
+                                <div class="calendar-day other-month">1</div>
+                                <div class="calendar-day other-month">2</div>
+                                <div class="calendar-day other-month">3</div>
+                                <div class="calendar-day other-month">4</div>
+                                <div class="calendar-day other-month">5</div>
+                            </div>
+                        </div>
+
+                        <div class="section-divider"></div>
+
+                        <!-- Event list -->
+                        <div class="event-list-section">
+                            <div class="event-list-header">
+                                <span class="event-list-title">Events</span>
+                                <span class="event-list-count">3 events</span>
+                            </div>
+                            <div class="event-list">
+                                <div class="event-card">
+                                    <div class="event-card-header">
+                                        <span class="event-name">Friday Night Convoy</span>
+                                        <span class="event-game-badge ats">ATS</span>
+                                    </div>
+                                    <div class="event-meta">
+                                        <span class="event-time">20:00 UTC</span>
+                                        <span class="event-route">Los Angeles <span class="arrow">&rarr;</span> Las Vegas</span>
+                                    </div>
+                                    <div class="event-tags">
+                                        <span class="event-tag mode">Simulation</span>
+                                        <span class="event-tag">EN/ES</span>
+                                    </div>
+                                </div>
+
+                                <div class="event-card type-truckshow">
+                                    <div class="event-card-header">
+                                        <span class="event-name">Summer Truck Show</span>
+                                        <span class="event-game-badge ets2">ETS2</span>
+                                    </div>
+                                    <div class="event-meta">
+                                        <span class="event-time">18:00 UTC</span>
+                                        <span class="event-route">Paris <span class="arrow">&rarr;</span> Berlin</span>
+                                    </div>
+                                    <div class="event-tags">
+                                        <span class="event-tag mode">Realistic</span>
+                                        <span class="event-tag">EN</span>
+                                    </div>
+                                </div>
+
+                                <div class="event-card type-exploration">
+                                    <div class="event-card-header">
+                                        <span class="event-name">Mountain Explorer</span>
+                                        <span class="event-game-badge ats">ATS</span>
+                                    </div>
+                                    <div class="event-meta">
+                                        <span class="event-time">22:00 UTC</span>
+                                        <span class="event-route">Denver <span class="arrow">&rarr;</span> Salt Lake City</span>
+                                    </div>
+                                    <div class="event-tags">
+                                        <span class="event-tag mode">Arcade</span>
+                                        <span class="event-tag">PT/EN</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom nav -->
+                    <div class="bottom-nav">
+                        <div class="bottom-nav-item active">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>
+                            Calendar
+                        </div>
+                        <div class="bottom-nav-item">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                            List
+                        </div>
+                    </div>
+
+                    <!-- Home indicator -->
+                    <div class="home-indicator">
+                        <div class="home-indicator-bar"></div>
+                    </div>
+                </div>
+                <p class="phone-label">Main View</p>
+            </div>
+
+            <!-- Phone 2: Event detail -->
+            <div>
+                <div class="phone-frame">
+                    <!-- System status bar -->
+                    <div class="status-bar">
+                        <span class="status-bar-left">9:41</span>
+                        <div class="status-bar-right">
+                            <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+                            <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                        </div>
+                    </div>
+
+                    <!-- App header (dimmed) -->
+                    <div class="app-header" style="opacity: 0.5;">
+                        <div class="app-brand">
+                            <span class="app-title">ConvoyRun</span>
+                            <span class="app-subtitle">Convoy & Event Manager</span>
+                        </div>
+                        <div class="status-indicator">
+                            <div class="status-dot"></div>
+                            <span class="status-text">Online (5)</span>
+                        </div>
+                    </div>
+
+                    <!-- Content with overlay -->
+                    <div class="content" style="position: relative;">
+                        <!-- Dimmed calendar background -->
+                        <div class="calendar-section" style="opacity: 0.3;">
+                            <div class="calendar-header">
+                                <span class="calendar-month">August 2026</span>
+                            </div>
+                        </div>
+
+                        <!-- Detail sheet -->
+                        <div class="detail-overlay">
+                            <div class="detail-sheet">
+                                <div class="detail-handle"></div>
+                                <div class="detail-event-name">Friday Night Convoy</div>
+                                <div class="detail-event-type">Convoy &bull; ATS &bull; Simulation</div>
+
+                                <div class="detail-row">
+                                    <div class="detail-row-icon">&#128197;</div>
+                                    <div class="detail-row-content">
+                                        <span class="detail-row-label">Meeting Time</span>
+                                        <span class="detail-row-value">Aug 26, 2026 &bull; 20:00 UTC</span>
+                                    </div>
+                                </div>
+
+                                <div class="detail-row">
+                                    <div class="detail-row-icon">&#128205;</div>
+                                    <div class="detail-row-content">
+                                        <span class="detail-row-label">Route</span>
+                                        <span class="detail-row-value">Los Angeles &rarr; Las Vegas</span>
+                                    </div>
+                                </div>
+
+                                <div class="detail-row">
+                                    <div class="detail-row-icon">&#127760;</div>
+                                    <div class="detail-row-content">
+                                        <span class="detail-row-label">Server</span>
+                                        <span class="detail-row-value">ConvoyRun Official</span>
+                                    </div>
+                                </div>
+
+                                <div class="detail-row">
+                                    <div class="detail-row-icon">&#128172;</div>
+                                    <div class="detail-row-content">
+                                        <span class="detail-row-label">Languages</span>
+                                        <span class="detail-row-value">English, Espa&ntilde;ol</span>
+                                    </div>
+                                </div>
+
+                                <div class="detail-row">
+                                    <div class="detail-row-icon">&#128100;</div>
+                                    <div class="detail-row-content">
+                                        <span class="detail-row-label">Created by</span>
+                                        <span class="detail-row-value">TruckerMax</span>
+                                    </div>
+                                </div>
+
+                                <div class="detail-row" style="border: none;">
+                                    <div class="detail-row-icon">&#128196;</div>
+                                    <div class="detail-row-content">
+                                        <span class="detail-row-label">Description</span>
+                                        <span class="detail-row-value">Weekly Friday night convoy from LA to Vegas. Stick together, have fun!</span>
+                                    </div>
+                                </div>
+
+                                <div class="detail-actions">
+                                    <button class="detail-btn secondary">Close</button>
+                                    <button class="detail-btn primary">Share</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Home indicator -->
+                    <div class="home-indicator">
+                        <div class="home-indicator-bar"></div>
+                    </div>
+                </div>
+                <p class="phone-label">Event Detail</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

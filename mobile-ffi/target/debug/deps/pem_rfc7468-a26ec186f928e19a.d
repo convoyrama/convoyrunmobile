@@ -1,0 +1,10 @@
+/home/usuario/Documentos/GitHub/dr.will/ConvoyRun/convoyrunmobile/mobile-ffi/target/debug/deps/pem_rfc7468-a26ec186f928e19a.d: /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/lib.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/decoder.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/encoder.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/error.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/grammar.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/../README.md
+
+/home/usuario/Documentos/GitHub/dr.will/ConvoyRun/convoyrunmobile/mobile-ffi/target/debug/deps/libpem_rfc7468-a26ec186f928e19a.rmeta: /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/lib.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/decoder.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/encoder.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/error.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/grammar.rs /home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/../README.md
+
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/lib.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/decoder.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/encoder.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/error.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/grammar.rs:
+/home/usuario/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pem-rfc7468-1.0.0/src/../README.md:
