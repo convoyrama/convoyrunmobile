@@ -56,13 +56,11 @@ uniffi {
 }
 
 // Fix UniFFI + Rust cache interaction:
-// 1. Cargo builds must complete BEFORE bindings are generated (stale .so → contract mismatch)
-// 2. Binding generation must not be cached (bindings depend on .so content, not just task inputs)
+// Cargo builds must complete BEFORE bindings are generated (stale .so → contract mismatch)
 tasks.configureEach {
     if (name == "buildUniffiBindings") {
-        dependsOn("cargoBuildAndroidArm64Release")
-        dependsOn("cargoBuildAndroidArmV7Release")
-        dependsOn("cargoBuildAndroidX86_64Release")
+        // Depend on all cargo release builds dynamically (task names vary by ABI)
+        dependsOn(tasks.matching { it.name.startsWith("cargoBuildAndroid") && it.name.endsWith("Release") })
         outputs.upToDateWhen { false }
     }
     if (name == "exportReleaseConsumerProguardFiles") {
