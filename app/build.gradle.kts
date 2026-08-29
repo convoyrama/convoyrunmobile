@@ -10,11 +10,14 @@ android {
     compileSdk = 35
 
     signingConfigs {
-        create("release") {
-            storeFile = file(System.getenv("KEYSTORE_FILE") ?: "release.keystore")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
-            keyAlias = System.getenv("KEY_ALIAS") ?: "convoyrun"
-            keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+        val keystoreFile = System.getenv("KEYSTORE_FILE")
+        if (keystoreFile != null && file(keystoreFile).exists()) {
+            create("release") {
+                storeFile = file(keystoreFile)
+                storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+                keyAlias = System.getenv("KEY_ALIAS") ?: "convoyrun"
+                keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+            }
         }
     }
 
@@ -29,7 +32,9 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
-            signingConfig = signingConfigs.getByName("release")
+            signingConfigs.findByName("release")?.let {
+                signingConfig = it
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
