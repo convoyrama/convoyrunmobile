@@ -54,3 +54,10 @@ uniffi {
         namespace = "convoyrun_mobile_ffi"
     }
 }
+
+// Fix: declare explicit dependency between UniFFI proguard generation and consumer export
+tasks.configureEach {
+    if (name == "exportReleaseConsumerProguardFiles") {
+        dependsOn("generateUniffiProguardRules")
+    }
+}
