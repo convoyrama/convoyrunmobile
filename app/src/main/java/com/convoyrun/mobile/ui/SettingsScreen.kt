@@ -21,7 +21,6 @@ import com.convoyrun.mobile.R
 import com.convoyrun.mobile.data.PreferencesManager
 import com.convoyrun.mobile.p2p.P2pManager
 import com.convoyrun.mobile.ui.theme.*
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,7 +29,6 @@ fun SettingsScreen(
     p2pManager: P2pManager,
     onBack: () -> Unit
 ) {
-    val scope = rememberCoroutineScope()
     val blockedAuthors by prefsManager.blockedAuthors.collectAsState()
     val filteredLanguages by prefsManager.filteredLanguages.collectAsState()
     val allEvents = p2pManager.getAllEvents()

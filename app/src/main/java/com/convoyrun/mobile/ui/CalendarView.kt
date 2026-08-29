@@ -76,7 +76,7 @@ fun CalendarView(
             }
 
             Text(
-                text = "${currentMonth.getDisplayName(TextStyle.FULL, Locale.getDefault())} $currentYear",
+                text = "${java.time.Month.valueOf(currentMonth.name).getDisplayName(TextStyle.FULL, Locale.getDefault())} $currentYear",
                 style = MaterialTheme.typography.headlineMedium,
                 color = TextPrimary
             )

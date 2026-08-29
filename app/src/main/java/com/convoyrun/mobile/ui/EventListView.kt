@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import com.convoyrun.mobile.R
 import com.convoyrun.mobile.model.*
 import com.convoyrun.mobile.ui.theme.*
-import kotlinx.datetime.*
 import java.text.SimpleDateFormat
 import java.util.*
 
