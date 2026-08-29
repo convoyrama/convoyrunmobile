@@ -54,9 +54,9 @@ fun StatusIndicator(
     }
 
     // Pulsing animation only when searching
-    val alpha = if (status == P2pManager.Status.SEARCHING) {
+    val alpha: Float = if (status == P2pManager.Status.SEARCHING) {
         val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-        infiniteTransition.animateFloat(
+        val pulseAlpha = infiniteTransition.animateFloat(
             initialValue = 0.4f,
             targetValue = 1f,
             animationSpec = infiniteRepeatable(
@@ -65,6 +65,7 @@ fun StatusIndicator(
             ),
             label = "pulseAlpha"
         )
+        pulseAlpha.value
     } else {
         1f
     }

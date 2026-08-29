@@ -4,9 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -60,7 +57,7 @@ fun CalendarView(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = {
+            TextButton(onClick = {
                 if (currentMonth == Month.JANUARY) {
                     currentMonth = Month.DECEMBER
                     currentYear -= 1
@@ -68,11 +65,7 @@ fun CalendarView(
                     currentMonth = Month.entries[currentMonth.ordinal - 1]
                 }
             }) {
-                Icon(
-                    Icons.Default.ChevronLeft,
-                    contentDescription = "Previous month",
-                    tint = TextSecondary
-                )
+                Text("‹", color = TextSecondary, fontSize = MaterialTheme.typography.headlineMedium.fontSize)
             }
 
             Text(
@@ -81,7 +74,7 @@ fun CalendarView(
                 color = TextPrimary
             )
 
-            IconButton(onClick = {
+            TextButton(onClick = {
                 if (currentMonth == Month.DECEMBER) {
                     currentMonth = Month.JANUARY
                     currentYear += 1
@@ -89,11 +82,7 @@ fun CalendarView(
                     currentMonth = Month.entries[currentMonth.ordinal + 1]
                 }
             }) {
-                Icon(
-                    Icons.Default.ChevronRight,
-                    contentDescription = "Next month",
-                    tint = TextSecondary
-                )
+                Text("›", color = TextSecondary, fontSize = MaterialTheme.typography.headlineMedium.fontSize)
             }
         }
 
