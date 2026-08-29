@@ -79,13 +79,25 @@ jobs:
           print('Icons generated')
           "
 
+      - name: Generate test keystore
+        run: |
+          keytool -genkey -v -keystore app/release.keystore \
+            -alias convoyrun -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass test123 -keypass test123 \
+            -dname "CN=Test, OU=Test, O=Test, L=Test, ST=Test, C=US"
+
       - name: Build APK
         run: ./gradlew assembleRelease
+        env:
+          KEYSTORE_FILE: release.keystore
+          KEYSTORE_PASSWORD: test123
+          KEY_ALIAS: convoyrun
+          KEY_PASSWORD: test123
 
       - name: Collect APK
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/release/app-release-unsigned.apk \
+          cp app/build/outputs/apk/release/app-release.apk \
             "dist/ConvoyRun-Mobile-${{ steps.get_version.outputs.version }}.apk"
 
       - uses: actions/upload-artifact@v4
