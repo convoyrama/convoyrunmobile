@@ -31,7 +31,7 @@ fun SettingsScreen(
 ) {
     val blockedAuthors by prefsManager.blockedAuthors.collectAsState()
     val filteredLanguages by prefsManager.filteredLanguages.collectAsState()
-    val allEvents = p2pManager.getAllEvents()
+    val allEvents = remember { p2pManager.getAllEvents() }
 
     var currentLang by remember { mutableStateOf(prefsManager.getAppLanguage()) }
     var selectedLangs by remember { mutableStateOf(filteredLanguages) }
@@ -39,8 +39,11 @@ fun SettingsScreen(
     val supportedLanguages = listOf("en", "es", "pt")
     val languageNames = mapOf("en" to "English", "es" to "Español", "pt" to "Português")
 
-    fun countEventsForLang(lang: String): Int =
-        allEvents.count { it.event.languages.contains(lang) }
+    val langCounts = remember(allEvents) {
+        supportedLanguages.associateWith { lang ->
+            allEvents.count { it.event.languages.contains(lang) }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -136,7 +139,7 @@ fun SettingsScreen(
                 Card(colors = CardDefaults.cardColors(containerColor = BgCard)) {
                     Column {
                         for (lang in supportedLanguages) {
-                            val count = countEventsForLang(lang)
+                            val count = langCounts[lang] ?: 0
                             val isChecked = selectedLangs.isEmpty() || selectedLangs.contains(lang)
                             Row(
                                 modifier = Modifier

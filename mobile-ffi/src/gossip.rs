@@ -66,49 +66,53 @@ impl GossipSubscription {
     }
 
     /// Wait for the next gossip event.
-    /// Returns None if the receiver is closed or errors.
+    /// Loops internally over control events (NeighborUp/Down).
+    /// Returns None ONLY when the receiver channel is truly closed.
     pub async fn next_event(&self) -> Option<GossipEvent> {
         let mut receiver = self.receiver.lock().await;
 
-        match receiver.next().await {
-            Ok(event) => {
-                match event {
-                    iroh_gossip::api::Event::Received(message) => {
-                        if message.content.len() > 256 * 1024 {
-                            eprintln!("[Gossip] Dropping oversized message ({} bytes)", message.content.len());
-                            return None;
-                        }
-                        let sender = message.delivered_from.to_string();
-                        let content = String::from_utf8_lossy(&message.content).to_string();
-                        let timestamp = chrono::Utc::now().timestamp();
+        loop {
+            match receiver.next().await {
+                Ok(event) => {
+                    match event {
+                        iroh_gossip::api::Event::Received(message) => {
+                            if message.content.len() > 256 * 1024 {
+                                eprintln!("[Gossip] Dropping oversized message ({} bytes)", message.content.len());
+                                continue;
+                            }
+                            let sender = message.delivered_from.to_string();
+                            let content = String::from_utf8_lossy(&message.content).to_string();
+                            let timestamp = chrono::Utc::now().timestamp();
 
-                        Some(GossipEvent {
-                            sender,
-                            content,
-                            timestamp,
-                        })
-                    }
-                    iroh_gossip::api::Event::NeighborUp(_) => {
-                        self.neighbor_count.fetch_add(1, Ordering::Relaxed);
-                        self.is_online.store(true, Ordering::Relaxed);
-                        None
-                    }
-                    iroh_gossip::api::Event::NeighborDown(_) => {
-                        let prev = self.neighbor_count.load(Ordering::Relaxed);
-                        if prev > 0 {
-                            self.neighbor_count.store(prev - 1, Ordering::Relaxed);
+                            return Some(GossipEvent {
+                                sender,
+                                content,
+                                timestamp,
+                            });
                         }
-                        if prev <= 1 {
-                            self.is_online.store(false, Ordering::Relaxed);
+                        iroh_gossip::api::Event::NeighborUp(_) => {
+                            self.neighbor_count.fetch_add(1, Ordering::Relaxed);
+                            self.is_online.store(true, Ordering::Relaxed);
+                            continue;
                         }
-                        None
+                        iroh_gossip::api::Event::NeighborDown(_) => {
+                            self.neighbor_count.fetch_update(
+                                Ordering::Relaxed,
+                                Ordering::Relaxed,
+                                |prev| if prev > 0 { Some(prev - 1) } else { None },
+                            ).ok();
+                            if self.neighbor_count.load(Ordering::Relaxed) == 0 {
+                                self.is_online.store(false, Ordering::Relaxed);
+                            }
+                            continue;
+                        }
+                        _ => continue,
                     }
-                    _ => None,
                 }
-            }
-            Err(e) => {
-                eprintln!("[Gossip] Error receiving message: {:?}", e);
-                None
+                Err(e) => {
+                    eprintln!("[Gossip] Receiver closed: {:?}", e);
+                    return None;
+                }
             }
         }
     }

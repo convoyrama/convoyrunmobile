@@ -48,10 +48,8 @@ class MainActivity : ComponentActivity() {
                 ConvoyRunApp(p2pManager, prefsManager)
             }
         }
-    }
 
-    override fun onStart() {
-        super.onStart()
+        // Start P2P once on create — survives background/foreground transitions
         p2pManager?.let { mgr ->
             lifecycleScope.launch {
                 mgr.start()
@@ -59,18 +57,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onDestroy() {
+        super.onDestroy()
+        // Stop P2P and cleanup only when Activity is truly destroyed
         p2pManager?.let { mgr ->
             lifecycleScope.launch {
                 mgr.stop()
+                mgr.destroy()
             }
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        p2pManager?.destroy()
     }
 
     private fun applyLocaleOverride(prefs: PreferencesManager) {

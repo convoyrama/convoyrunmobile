@@ -53,19 +53,21 @@ fun StatusIndicator(
         statusText
     }
 
-    // Pulsing animation for searching state
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulseAlpha"
-    )
-
-    val alpha = if (status == P2pManager.Status.SEARCHING) pulseAlpha else 1f
+    // Pulsing animation only when searching
+    val alpha = if (status == P2pManager.Status.SEARCHING) {
+        val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+        infiniteTransition.animateFloat(
+            initialValue = 0.4f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1000, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "pulseAlpha"
+        )
+    } else {
+        1f
+    }
 
     Row(
         modifier = modifier,

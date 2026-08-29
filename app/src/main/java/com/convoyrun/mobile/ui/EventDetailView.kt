@@ -18,13 +18,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.convoyrun.mobile.R
 import com.convoyrun.mobile.model.*
 import com.convoyrun.mobile.ui.theme.*
-import kotlinx.datetime.*
 import java.text.SimpleDateFormat
 import java.util.*
 

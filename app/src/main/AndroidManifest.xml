@@ -22,6 +22,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode|fontScale|locale"
             android:theme="@style/Theme.ConvoyRun"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>

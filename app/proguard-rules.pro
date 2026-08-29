@@ -1,14 +1,10 @@
 # ConvoyRun Mobile ProGuard Rules
 
-# Keep Rust FFI classes
+# Keep JNI entry point
 -keep class com.convoyrun.mobile.p2p.ConvoyRunP2p { *; }
--keep class com.convoyrun.mobile.ConvoyRunApplication { *; }
 
 # Keep data classes for serialization
 -keep class com.convoyrun.mobile.model.** { *; }
-
-# Keep JNA (required for native library loading)
--keep class com.sun.jna.** { *; }
 
 # Keep Kotlinx Serialization
 -keepattributes *Annotation*, InnerClasses
@@ -20,9 +16,6 @@
 -keepclasseswithmembers class com.convoyrun.mobile.model.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
-
-# Keep UniFFI generated classes
--keep class com.convoyrun.mobile.ffi.** { *; }
 
 # General Android optimizations
 -optimizationpasses 5

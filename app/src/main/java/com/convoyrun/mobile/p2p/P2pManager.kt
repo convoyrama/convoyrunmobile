@@ -11,6 +11,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
@@ -154,22 +155,17 @@ class P2pManager(
         if (prefs.isBlocked(event.peerId)) return
         if (!prefs.matchesLanguageFilter(event.event.languages)) return
 
-        val currentEvents = _events.value.toMutableList()
-
-        // Check if event already exists (by ID)
-        val existingIndex = currentEvents.indexOfFirst { it.id == event.id }
-        if (existingIndex >= 0) {
-            // Update existing event
-            currentEvents[existingIndex] = event
-        } else {
-            // Add new event
-            currentEvents.add(event)
+        _events.update { current ->
+            val mutable = current.toMutableList()
+            val existingIndex = mutable.indexOfFirst { it.id == event.id }
+            if (existingIndex >= 0) {
+                mutable[existingIndex] = event
+            } else {
+                mutable.add(event)
+            }
+            mutable.sortBy { it.schedule.meetingTimestamp }
+            mutable
         }
-
-        // Sort by meeting time
-        currentEvents.sortBy { it.schedule.meetingTimestamp }
-
-        _events.value = currentEvents
 
         // Periodic purge every 50 events
         if (_events.value.size % 50 == 0) {
@@ -177,24 +173,16 @@ class P2pManager(
         }
     }
 
-    /**
-     * Remove an event by ID (from delete_convoy gossip)
-     */
     private fun removeEvent(convoyId: String) {
-        val currentEvents = _events.value.toMutableList()
-        if (currentEvents.removeAll { it.id == convoyId }) {
-            _events.value = currentEvents
+        _events.update { current ->
+            current.filterNot { it.id == convoyId }
         }
     }
 
-    /**
-     * Purge events older than 3 days past their meeting time
-     */
     private fun purgeExpiredEvents() {
         val cutoff = kotlinx.datetime.Clock.System.now().epochSeconds - (3 * 86400)
-        val currentEvents = _events.value.toMutableList()
-        if (currentEvents.removeAll { it.schedule.meetingTimestamp < cutoff }) {
-            _events.value = currentEvents
+        _events.update { current ->
+            current.filter { it.schedule.meetingTimestamp >= cutoff }
         }
     }
 
@@ -225,19 +213,14 @@ class P2pManager(
 
     fun blockAuthor(peerId: String, nick: String) {
         prefs.blockAuthor(peerId, nick)
-        val currentEvents = _events.value.toMutableList()
-        if (currentEvents.removeAll { it.peerId == peerId }) {
-            _events.value = currentEvents
+        _events.update { current ->
+            current.filterNot { it.peerId == peerId }
         }
-    }
-
-    fun unblockAuthor(peerId: String) {
-        prefs.unblockAuthor(peerId)
     }
 
     private fun applyBlacklist(data: String) {
         try {
-            val json = kotlinx.serialization.json.Json.parseToJsonElement(data).jsonObject
+            val json = Json.parseToJsonElement(data).jsonObject
             val peerIds = json["peerIds"]?.jsonArray
             peerIds?.forEach { entry ->
                 val pid = entry.jsonPrimitive.content
@@ -245,10 +228,9 @@ class P2pManager(
                     prefs.blockAuthor(pid, pid.take(8))
                 }
             }
-            val currentEvents = _events.value.toMutableList()
             val blocked = prefs.blockedAuthors.value.keys
-            if (currentEvents.removeAll { it.peerId in blocked }) {
-                _events.value = currentEvents
+            _events.update { current ->
+                current.filterNot { it.peerId in blocked }
             }
         } catch (_: Exception) { /* malformed blacklist */ }
     }

@@ -142,52 +142,50 @@ impl P2pNode {
     }
 }
 
-/// Load identity from file or create a new one
+/// Load identity from file or create a new one (atomic — no TOCTOU race)
 fn load_or_create_identity(data_dir: &Path) -> Result<SecretKey> {
     let identity_path = data_dir.join(IDENTITY_FILE);
 
-    if identity_path.exists() {
-        // Load existing identity
-        let key_bytes =
-            std::fs::read(&identity_path).context("Failed to read identity file")?;
-
-        if key_bytes.len() != 32 {
-            anyhow::bail!(
-                "Invalid identity file: expected 32 bytes, got {}",
-                key_bytes.len()
-            );
+    // Try to read existing identity first
+    match std::fs::read(&identity_path) {
+        Ok(key_bytes) => {
+            if key_bytes.len() != 32 {
+                anyhow::bail!(
+                    "Invalid identity file: expected 32 bytes, got {}",
+                    key_bytes.len()
+                );
+            }
+            let mut key_array = [0u8; 32];
+            key_array.copy_from_slice(&key_bytes);
+            let secret_key = SecretKey::from_bytes(&key_array);
+            eprintln!("[P2P] Loaded existing identity");
+            Ok(secret_key)
         }
+        Err(_) => {
+            // Create new identity atomically
+            let secret_key = SecretKey::generate();
+            let key_bytes = secret_key.to_bytes();
 
-        let mut key_array = [0u8; 32];
-        key_array.copy_from_slice(&key_bytes);
+            // Write with restrictive permissions (owner only)
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                let perms = std::fs::Permissions::from_mode(0o600);
+                let f = std::fs::File::create(&identity_path)
+                    .context("Failed to create identity file")?;
+                f.set_permissions(perms)
+                    .context("Failed to set identity file permissions")?;
+                std::fs::write(&identity_path, key_bytes)
+                    .context("Failed to write identity file")?;
+            }
+            #[cfg(not(unix))]
+            {
+                std::fs::write(&identity_path, key_bytes)
+                    .context("Failed to write identity file")?;
+            }
 
-        let secret_key = SecretKey::from_bytes(&key_array);
-        eprintln!("[P2P] Loaded existing identity");
-        Ok(secret_key)
-    } else {
-        // Create new identity
-        let secret_key = SecretKey::generate();
-        let key_bytes = secret_key.to_bytes();
-
-        // Write with restrictive permissions (owner only)
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let perms = std::fs::Permissions::from_mode(0o600);
-            let f = std::fs::File::create(&identity_path)
-                .context("Failed to create identity file")?;
-            f.set_permissions(perms)
-                .context("Failed to set identity file permissions")?;
-            std::fs::write(&identity_path, key_bytes)
-                .context("Failed to write identity file")?;
+            eprintln!("[P2P] Created new identity");
+            Ok(secret_key)
         }
-        #[cfg(not(unix))]
-        {
-            std::fs::write(&identity_path, key_bytes)
-                .context("Failed to write identity file")?;
-        }
-
-        eprintln!("[P2P] Created new identity");
-        Ok(secret_key)
     }
 }

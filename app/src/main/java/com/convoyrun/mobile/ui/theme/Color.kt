@@ -11,17 +11,12 @@ val AccentLight = Color(0xFF33BBFF)     // Lighter accent for highlights
 val BgPrimary = Color(0xFF1A1A2E)       // --bg-primary
 val BgSecondary = Color(0xFF16213E)     // --bg-secondary
 val BgCard = Color(0xFF1E2A4A)          // Card backgrounds
-val BgCardHover = Color(0xFF243050)     // Card hover state
 
 // Text colors
 val TextPrimary = Color(0xFFE0E0E0)     // Main text
 val TextSecondary = Color(0xFF99AABB)   // Secondary text (WCAG AA 5.3:1 on BgPrimary)
 val TextMuted = Color(0xFF88AABB)       // Muted text (WCAG AA 5.1:1 on BgCard)
 
-// Status colors
-val StatusOnline = Color(0xFF4CAF50)    // Green - online
-val StatusSearching = Color(0xFFFFC107) // Yellow - searching
-val StatusOffline = Color(0xFF757575)   // Gray - offline
 
 // Event type colors
 val EventTypeConvoy = Color(0xFF00AAFF)     // Blue - Convoy
