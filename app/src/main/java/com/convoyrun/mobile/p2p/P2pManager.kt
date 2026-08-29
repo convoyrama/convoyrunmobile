@@ -168,7 +168,7 @@ class P2pManager(private val context: Context) {
 
         scope.launch {
             try {
-                node?.close()
+                node?.shutdown()
             } catch (e: Exception) {
                 println("[P2P] Error closing node: ${e.message}")
             }

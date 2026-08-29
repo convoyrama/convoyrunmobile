@@ -73,7 +73,7 @@ impl P2pNodeWrapper {
     }
 
     /// Graceful shutdown
-    pub async fn close(&self) -> Result<(), P2pError> {
+    pub async fn shutdown(&self) -> Result<(), P2pError> {
         self.inner
             .close()
             .await
