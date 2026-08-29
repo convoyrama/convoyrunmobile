@@ -41,7 +41,7 @@ tokio = { version = "1", features = ["full"] }
 chrono = "0.4"
 
 # UniFFI bindings generation
-uniffi = { version = "0.31", features = ["cli", "scaffolding-ffi-buffer-fns"] }
+uniffi = { version = "0.29.4", features = ["cli"] }
 
 # Android JNI support
 [target.'cfg(target_os = "android")'.dependencies]
@@ -49,7 +49,7 @@ ndk-context = "0.1"
 jni = "0.22"
 
 [build-dependencies]
-uniffi = { version = "0.31", features = ["build"] }
+uniffi = { version = "0.29.4", features = ["build"] }
 
 [profile.release]
 lto = true
