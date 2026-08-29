@@ -65,6 +65,8 @@ class P2pManager(
         starting = true
 
         try {
+            android.util.Log.i("P2pManager", "Starting P2P node...")
+            
             // Get data directory
             val dataDir = File(context.filesDir, "p2p")
             dataDir.mkdirs()
@@ -73,21 +75,25 @@ class P2pManager(
             ConvoyRunP2p.installAndroidContext(context.applicationContext)
 
             // Create P2P node (factory function via UniFFI)
+            android.util.Log.i("P2pManager", "Creating P2P node...")
             val nodeWrapper = createP2pNode(dataDir.absolutePath)
             node = nodeWrapper
+            android.util.Log.i("P2pManager", "P2P node created, peerId: ${nodeWrapper.peerId()}")
 
             // Join the gossip topic
+            android.util.Log.i("P2pManager", "Joining gossip topic...")
             val sub = nodeWrapper.joinTopic()
             subscription = sub
+            android.util.Log.i("P2pManager", "Joined gossip topic successfully")
 
             _status.value = Status.SEARCHING
 
             // Start receiving events
             startReceivingEvents()
 
-            println("[P2P] Manager started, peerId: ${nodeWrapper.peerId()}")
+            android.util.Log.i("P2pManager", "P2P manager started successfully")
         } catch (e: Exception) {
-            println("[P2P] Failed to start: ${e.message}")
+            android.util.Log.e("P2pManager", "Failed to start: ${e.message}", e)
             _status.value = Status.OFFLINE
         } finally {
             starting = false
@@ -100,21 +106,29 @@ class P2pManager(
     private fun startReceivingEvents() {
         receiverJob = scope.launch {
             val sub = subscription ?: return@launch
+            android.util.Log.i("P2pManager", "Event receiver loop started")
 
             while (isActive) {
                 try {
                     // Update peer count
-                    _peerCount.value = sub.peerCount().toInt()
+                    val peerCount = sub.peerCount().toInt()
+                    _peerCount.value = peerCount
 
                     // Update status based on peer count
-                    _status.value = if (_peerCount.value > 0) {
+                    val newStatus = if (peerCount > 0) {
                         Status.ONLINE
                     } else {
                         Status.SEARCHING
                     }
+                    if (_status.value != newStatus) {
+                        android.util.Log.i("P2pManager", "Status changed: ${_status.value} -> $newStatus (peers: $peerCount)")
+                        _status.value = newStatus
+                    }
 
                     // Wait for next event
                     val event = sub.nextEvent() ?: continue
+
+                    android.util.Log.i("P2pManager", "Received gossip event from ${event.sender()}")
 
                     // Parse the gossip message
                     val message = parseGossipMessage(event.content()) ?: continue
@@ -122,18 +136,21 @@ class P2pManager(
                     when (message) {
                         is GossipMessage.Convoy -> {
                             if (!verifyConvoySignature(message.data)) {
-                                println("[P2P] Dropping event with invalid signature")
+                                android.util.Log.w("P2pManager", "Dropping event with invalid signature")
                                 continue
                             }
                             val convoyEvent = parseConvoyEvent(message.data)
                             if (convoyEvent != null) {
+                                android.util.Log.i("P2pManager", "Adding convoy event: ${convoyEvent.event.name}")
                                 addEvent(convoyEvent)
                             }
                         }
                         is GossipMessage.DeleteConvoy -> {
+                            android.util.Log.i("P2pManager", "Received delete for convoy: ${message.convoyId}")
                             removeEvent(message.convoyId)
                         }
                         is GossipMessage.Blacklist -> {
+                            android.util.Log.i("P2pManager", "Received blacklist")
                             applyBlacklist(message.data)
                         }
                         else -> { /* Read-only: ignore vote, channel, trustlist */ }
@@ -141,7 +158,7 @@ class P2pManager(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    println("[P2P] Error receiving event: ${e.message}")
+                    android.util.Log.e("P2pManager", "Error receiving event: ${e.message}", e)
                     delay(1000) // Back off on error
                 }
             }

@@ -1,5 +1,7 @@
 package com.convoyrun.mobile.ui
 
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -114,6 +117,8 @@ fun SettingsScreen(
                                 onClick = {
                                     currentLang = null
                                     prefsManager.setAppLanguage(null)
+                                    // Apply system default
+                                    AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList())
                                 }
                             )
                             for (lang in supportedLanguages) {
@@ -123,6 +128,9 @@ fun SettingsScreen(
                                     onClick = {
                                         currentLang = lang
                                         prefsManager.setAppLanguage(lang)
+                                        // Apply language change immediately
+                                        val locales = LocaleListCompat.forLanguageTags(lang)
+                                        AppCompatDelegate.setApplicationLocales(locales)
                                     }
                                 )
                             }
