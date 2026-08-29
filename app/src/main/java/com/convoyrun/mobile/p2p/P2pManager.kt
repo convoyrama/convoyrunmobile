@@ -2,6 +2,8 @@ package com.convoyrun.mobile.p2p
 
 import android.content.Context
 import com.convoyrun.mobile.model.*
+import uniffi.convoyrun_mobile_ffi.P2pNodeWrapper
+import uniffi.convoyrun_mobile_ffi.GossipSubscriptionWrapper
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

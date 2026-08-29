@@ -1,17 +1,8 @@
 # UniFFI configuration for ConvoyRun Mobile FFI
-# See: https://mozilla.github.io/uniffi-rs/udl/
 
 # The library name (must match the crate name in Cargo.toml)
 cdylib_name = "convoyrun_mobile_ffi"
 
-# Kotlin package name for generated bindings
- kotlin_package_name = "com.convoyrun.mobile.ffi"
-
 # Generate async functions as suspend functions
- [bindings.kotlin]
- async_runtime = "tokio"
-
-# Error handling
-[bindings.kotlin.external_types]
-# Map Rust error types to Kotlin exceptions
-P2pError = "com.convoyrun.mobile.ffi.ConvoyRunError"
+[bindings.kotlin]
+async_runtime = "tokio"
