@@ -70,11 +70,14 @@ impl GossipSubscription {
     pub async fn next_event(&self) -> Option<GossipEvent> {
         let mut receiver = self.receiver.lock().await;
 
-        // GossipReceiver.next() returns Result<Event, ChannelError>
         match receiver.next().await {
             Ok(event) => {
                 match event {
                     iroh_gossip::api::Event::Received(message) => {
+                        if message.content.len() > 256 * 1024 {
+                            eprintln!("[Gossip] Dropping oversized message ({} bytes)", message.content.len());
+                            return None;
+                        }
                         let sender = message.delivered_from.to_string();
                         let content = String::from_utf8_lossy(&message.content).to_string();
                         let timestamp = chrono::Utc::now().timestamp();
@@ -85,10 +88,22 @@ impl GossipSubscription {
                             timestamp,
                         })
                     }
-                    _ => {
-                        // Other events (NeighborUp, NeighborDown, etc.) - skip
+                    iroh_gossip::api::Event::NeighborUp(_) => {
+                        self.neighbor_count.fetch_add(1, Ordering::Relaxed);
+                        self.is_online.store(true, Ordering::Relaxed);
                         None
                     }
+                    iroh_gossip::api::Event::NeighborDown(_) => {
+                        let prev = self.neighbor_count.load(Ordering::Relaxed);
+                        if prev > 0 {
+                            self.neighbor_count.store(prev - 1, Ordering::Relaxed);
+                        }
+                        if prev <= 1 {
+                            self.is_online.store(false, Ordering::Relaxed);
+                        }
+                        None
+                    }
+                    _ => None,
                 }
             }
             Err(e) => {
@@ -114,11 +129,90 @@ pub fn parse_gossip_message(json: &str) -> Option<GossipMessage> {
     serde_json::from_str(json).ok()
 }
 
-/// Extract convoy data from a GossipMessage (for read-only mobile app)
-/// Only returns data for "convoy" type messages
-pub fn extract_convoy_data(message: &GossipMessage) -> Option<&str> {
-    match message {
-        GossipMessage::Convoy { data } => Some(data),
-        _ => None,
+/// Verify the ed25519 signature of a convoy event JSON.
+/// Returns true if the signature is valid, false otherwise.
+pub fn verify_convoy_signature(convoy_json: &str) -> bool {
+    use base64::Engine;
+    use ed25519_dalek::{Verifier, VerifyingKey};
+
+    let mut value: serde_json::Value = match serde_json::from_str(convoy_json) {
+        Ok(v) => v,
+        Err(_) => return false,
+    };
+
+    let obj = match value.as_object_mut() {
+        Some(o) => o,
+        None => return false,
+    };
+
+    let signature_b64 = match obj.get("signature").and_then(|v| v.as_str()) {
+        Some(s) if !s.is_empty() => s.to_string(),
+        _ => return false,
+    };
+
+    let peer_id_b64 = match obj.get("peerId").and_then(|v| v.as_str()) {
+        Some(s) if !s.is_empty() => s.to_string(),
+        _ => return false,
+    };
+
+    // Clear signature for canonical form
+    obj.insert("signature".to_string(), serde_json::Value::String(String::new()));
+
+    let canonical = canonical_json(&value);
+
+    // Decode peer_id (raw ed25519 public key, base64)
+    let peer_id_bytes = match base64::engine::general_purpose::STANDARD.decode(&peer_id_b64) {
+        Ok(b) if b.len() == 32 => b,
+        _ => return false,
+    };
+
+    // Decode signature
+    let sig_bytes = match base64::engine::general_purpose::STANDARD.decode(&signature_b64) {
+        Ok(b) if b.len() == 64 => b,
+        _ => return false,
+    };
+
+    let mut key_array = [0u8; 32];
+    key_array.copy_from_slice(&peer_id_bytes);
+    let verifying_key = match VerifyingKey::from_bytes(&key_array) {
+        Ok(k) => k,
+        Err(_) => return false,
+    };
+
+    let mut sig_array = [0u8; 64];
+    sig_array.copy_from_slice(&sig_bytes);
+    let signature = ed25519_dalek::Signature::from_bytes(&sig_array);
+
+    verifying_key.verify(canonical.as_bytes(), &signature).is_ok()
+}
+
+/// Canonical JSON serialization (sorted keys, recursive)
+fn canonical_json(value: &serde_json::Value) -> String {
+    match value {
+        serde_json::Value::Null => "null".to_string(),
+        serde_json::Value::Bool(b) => b.to_string(),
+        serde_json::Value::Number(n) => n.to_string(),
+        serde_json::Value::String(s) => {
+            serde_json::to_string(s).unwrap_or_else(|_| "\"\"".to_string())
+        }
+        serde_json::Value::Array(arr) => {
+            let items: Vec<String> = arr.iter().map(canonical_json).collect();
+            format!("[{}]", items.join(","))
+        }
+        serde_json::Value::Object(obj) => {
+            let mut keys: Vec<_> = obj.keys().collect();
+            keys.sort();
+            let items: Vec<String> = keys
+                .iter()
+                .map(|k| {
+                    format!(
+                        "{}:{}",
+                        serde_json::to_string(k).unwrap_or_else(|_| "\"\"".to_string()),
+                        canonical_json(&obj[*k])
+                    )
+                })
+                .collect();
+            format!("{{{}}}", items.join(","))
+        }
     }
 }

@@ -1,9 +1,11 @@
 package com.convoyrun.mobile.p2p
 
 import android.content.Context
+import com.convoyrun.mobile.data.PreferencesManager
 import com.convoyrun.mobile.model.*
 import uniffi.convoyrun_mobile_ffi.P2pNodeWrapper
 import uniffi.convoyrun_mobile_ffi.GossipSubscriptionWrapper
+import uniffi.convoyrun_mobile_ffi.verifyConvoySignature
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +18,10 @@ import java.io.File
  * This class manages the P2P node lifecycle and provides
  * a clean Kotlin API for the UI layer.
  */
-class P2pManager(private val context: Context) {
+class P2pManager(
+    private val context: Context,
+    private val prefs: PreferencesManager
+) {
 
     /**
      * Connection status
@@ -39,6 +44,7 @@ class P2pManager(private val context: Context) {
     private var node: P2pNodeWrapper? = null
     private var subscription: GossipSubscriptionWrapper? = null
     private var receiverJob: Job? = null
+    private var starting = false
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -46,7 +52,8 @@ class P2pManager(private val context: Context) {
      * Initialize and start the P2P node
      */
     suspend fun start() {
-        if (node != null) return
+        if (node != null || starting) return
+        starting = true
 
         try {
             // Get data directory
@@ -56,8 +63,8 @@ class P2pManager(private val context: Context) {
             // Initialize Android context (for DNS resolver)
             ConvoyRunP2p.installAndroidContext(context.applicationContext)
 
-            // Create P2P node
-            val nodeWrapper = P2pNodeWrapper(dataDir.absolutePath)
+            // Create P2P node (async constructor via UniFFI)
+            val nodeWrapper = P2pNodeWrapper.new(dataDir.absolutePath)
             node = nodeWrapper
 
             // Join the gossip topic
@@ -73,6 +80,8 @@ class P2pManager(private val context: Context) {
         } catch (e: Exception) {
             println("[P2P] Failed to start: ${e.message}")
             _status.value = Status.OFFLINE
+        } finally {
+            starting = false
         }
     }
 
@@ -101,16 +110,24 @@ class P2pManager(private val context: Context) {
                     // Parse the gossip message
                     val message = parseGossipMessage(event.content()) ?: continue
 
-                    // Only process convoy events (read-only mode)
                     when (message) {
                         is GossipMessage.Convoy -> {
+                            if (!verifyConvoySignature(message.data)) {
+                                println("[P2P] Dropping event with invalid signature")
+                                continue
+                            }
                             val convoyEvent = parseConvoyEvent(message.data)
                             if (convoyEvent != null) {
                                 addEvent(convoyEvent)
                             }
                         }
-                        // Ignore other message types (vote, delete, channel, etc.)
-                        else -> { /* Read-only: ignore */ }
+                        is GossipMessage.DeleteConvoy -> {
+                            removeEvent(message.convoyId)
+                        }
+                        is GossipMessage.Blacklist -> {
+                            applyBlacklist(message.data)
+                        }
+                        else -> { /* Read-only: ignore vote, channel, trustlist */ }
                     }
                 } catch (e: CancellationException) {
                     throw e
@@ -126,6 +143,9 @@ class P2pManager(private val context: Context) {
      * Add an event to the local cache
      */
     private fun addEvent(event: ConvoyEvent) {
+        if (prefs.isBlocked(event.peerId)) return
+        if (!prefs.matchesLanguageFilter(event.event.languages)) return
+
         val currentEvents = _events.value.toMutableList()
 
         // Check if event already exists (by ID)
@@ -142,50 +162,113 @@ class P2pManager(private val context: Context) {
         currentEvents.sortBy { it.schedule.meetingTimestamp }
 
         _events.value = currentEvents
+
+        // Periodic purge every 50 events
+        if (_events.value.size % 50 == 0) {
+            purgeExpiredEvents()
+        }
+    }
+
+    /**
+     * Remove an event by ID (from delete_convoy gossip)
+     */
+    private fun removeEvent(convoyId: String) {
+        val currentEvents = _events.value.toMutableList()
+        if (currentEvents.removeAll { it.id == convoyId }) {
+            _events.value = currentEvents
+        }
+    }
+
+    /**
+     * Purge events older than 3 days past their meeting time
+     */
+    private fun purgeExpiredEvents() {
+        val cutoff = kotlinx.datetime.Clock.System.now().epochSeconds - (3 * 86400)
+        val currentEvents = _events.value.toMutableList()
+        if (currentEvents.removeAll { it.schedule.meetingTimestamp < cutoff }) {
+            _events.value = currentEvents
+        }
     }
 
     /**
      * Get events for a specific date (start of day timestamp)
      */
     fun getEventsForDate(dayTimestamp: Long): List<ConvoyEvent> {
-        val dayStart = dayTimestamp
-        val dayEnd = dayStart + 86400 // 24 hours in seconds
+        val tz = kotlinx.datetime.TimeZone.currentSystemDefault()
+        val date = kotlinx.datetime.Instant.fromEpochSeconds(dayTimestamp)
+            .toLocalDateTime(tz).date
+        val dayStart = date.atStartOfDayIn(tz).epochSeconds
+        val dayEnd = date.plus(1, kotlinx.datetime.DateTimeUnit.DAY)
+            .atStartOfDayIn(tz).epochSeconds
 
-        return _events.value.filter { event ->
+        return filteredEvents().filter { event ->
             event.schedule.meetingTimestamp in dayStart until dayEnd
         }
     }
 
-    /**
-     * Get all events
-     */
-    fun getAllEvents(): List<ConvoyEvent> = _events.value
+    fun getAllEvents(): List<ConvoyEvent> = filteredEvents()
+
+    private fun filteredEvents(): List<ConvoyEvent> {
+        val blocked = prefs.blockedAuthors.value.keys
+        return _events.value.filter { event ->
+            event.peerId !in blocked && prefs.matchesLanguageFilter(event.event.languages)
+        }
+    }
+
+    fun blockAuthor(peerId: String, nick: String) {
+        prefs.blockAuthor(peerId, nick)
+        val currentEvents = _events.value.toMutableList()
+        if (currentEvents.removeAll { it.peerId == peerId }) {
+            _events.value = currentEvents
+        }
+    }
+
+    fun unblockAuthor(peerId: String) {
+        prefs.unblockAuthor(peerId)
+    }
+
+    private fun applyBlacklist(data: String) {
+        try {
+            val json = kotlinx.serialization.json.Json.parseToJsonElement(data).jsonObject
+            val peerIds = json["peerIds"]?.jsonArray
+            peerIds?.forEach { entry ->
+                val pid = entry.jsonPrimitive.content
+                if (!prefs.isBlocked(pid)) {
+                    prefs.blockAuthor(pid, pid.take(8))
+                }
+            }
+            val currentEvents = _events.value.toMutableList()
+            val blocked = prefs.blockedAuthors.value.keys
+            if (currentEvents.removeAll { it.peerId in blocked }) {
+                _events.value = currentEvents
+            }
+        } catch (_: Exception) { /* malformed blacklist */ }
+    }
 
     /**
      * Stop the P2P node
      */
-    fun stop() {
+    suspend fun stop() {
+        starting = false
         receiverJob?.cancel()
+        receiverJob?.join()
         receiverJob = null
 
-        scope.launch {
-            try {
-                node?.shutdown()
-            } catch (e: Exception) {
-                println("[P2P] Error closing node: ${e.message}")
-            }
-            node = null
-            subscription = null
-            _status.value = Status.OFFLINE
-            _peerCount.value = 0
+        try {
+            node?.shutdown()
+        } catch (e: Exception) {
+            println("[P2P] Error closing node: ${e.message}")
         }
+        node = null
+        subscription = null
+        _status.value = Status.OFFLINE
+        _peerCount.value = 0
     }
 
     /**
      * Cleanup resources
      */
     fun destroy() {
-        stop()
         scope.cancel()
     }
 

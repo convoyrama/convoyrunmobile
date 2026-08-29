@@ -12,10 +12,3 @@ plugins {
     id("dev.gobley.cargo") version "0.3.7" apply false
     id("dev.gobley.uniffi") version "0.3.7" apply false
 }
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}

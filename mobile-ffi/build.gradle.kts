@@ -1,10 +1,10 @@
 import gobley.gradle.cargo.dsl.*
 
 plugins {
-    kotlin("multiplatform") version "2.1.10"
-    id("org.jetbrains.kotlin.plugin.atomicfu") version "2.1.10"
-    id("dev.gobley.cargo") version "0.3.7"
-    id("dev.gobley.uniffi") version "0.3.7"
+    kotlin("multiplatform")
+    id("org.jetbrains.kotlin.plugin.atomicfu")
+    id("dev.gobley.cargo")
+    id("dev.gobley.uniffi")
     id("com.android.library")
 }
 

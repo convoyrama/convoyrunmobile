@@ -2,9 +2,11 @@ package com.convoyrun.mobile.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -71,6 +73,7 @@ fun EventListView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -83,11 +86,11 @@ fun EventListView(
                 )
             )
 
-            EventType.values().forEach { type ->
+            EventType.entries.forEach { type ->
                 FilterChip(
                     selected = selectedFilter == type,
                     onClick = { selectedFilter = type },
-                    label = { Text(getEventTypeName(type)) },
+                    label = { Text(stringResource(getEventTypeNameRes(type))) },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = getEventTypeColor(type).copy(alpha = 0.2f)
                     )
@@ -173,7 +176,7 @@ private fun EventCard(
                     color = getEventTypeColor(event.event.eventType).copy(alpha = 0.2f)
                 ) {
                     Text(
-                        text = getEventTypeName(event.event.eventType),
+                        text = stringResource(getEventTypeNameRes(event.event.eventType)),
                         style = MaterialTheme.typography.labelSmall,
                         color = getEventTypeColor(event.event.eventType),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -270,45 +273,6 @@ private fun EventCard(
                 )
             }
         }
-    }
-}
-
-/**
- * Get event type display name
- */
-private fun getEventTypeName(type: EventType): String {
-    return when (type) {
-        EventType.Convoy -> "Convoy"
-        EventType.TruckShow -> "Truck Show"
-        EventType.Exploration -> "Exploration"
-        EventType.Competition -> "Competition"
-        EventType.Cruise -> "Cruise"
-        EventType.Other -> "Other"
-    }
-}
-
-/**
- * Get event type color
- */
-private fun getEventTypeColor(type: EventType): androidx.compose.ui.graphics.Color {
-    return when (type) {
-        EventType.Convoy -> EventTypeConvoy
-        EventType.TruckShow -> EventTypeTruckShow
-        EventType.Exploration -> EventTypeExploration
-        EventType.Competition -> EventTypeCompetition
-        EventType.Cruise -> EventTypeCruise
-        EventType.Other -> EventTypeOther
-    }
-}
-
-/**
- * Get game color
- */
-private fun getGameColor(game: Game): androidx.compose.ui.graphics.Color {
-    return when (game) {
-        Game.ATS -> GameATS
-        Game.ETS2 -> GameETS2
-        Game.Other -> TextSecondary
     }
 }
 

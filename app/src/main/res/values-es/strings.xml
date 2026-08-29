@@ -5,7 +5,7 @@
     <string name="app_subtitle">Convoy &amp; Event Manager</string>
 
     <!-- Status -->
-    <string name="status_online">En linea</string>
+    <string name="status_online">En línea</string>
     <string name="status_searching">Buscando…</string>
     <string name="status_offline">Desconectado</string>
 
@@ -16,14 +16,14 @@
     <!-- Filters -->
     <string name="filter_all">Todos</string>
     <string name="search_events">Buscar eventos…</string>
-    <string name="no_events">No hay eventos para este dia</string>
+    <string name="no_events">No hay eventos para este día</string>
 
     <!-- Event Details -->
     <string name="event_details">Detalles del Evento</string>
     <string name="detail_meeting">Hora de Encuentro</string>
     <string name="detail_route">Ruta</string>
     <string name="detail_server">Servidor</string>
-    <string name="detail_description">Descripcion</string>
+    <string name="detail_description">Descripción</string>
     <string name="detail_languages">Idiomas</string>
     <string name="detail_link">Enlace</string>
     <string name="detail_creator">Creado por</string>
@@ -32,4 +32,33 @@
     <!-- Actions -->
     <string name="share">Compartir</string>
     <string name="close">Cerrar</string>
+    <string name="block_author">Bloquear Autor</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Configuración</string>
+    <string name="settings_back">Volver</string>
+    <string name="settings_lang_group">Idioma de la App</string>
+    <string name="settings_lang_label">Idioma</string>
+    <string name="settings_lang_sub">Reemplazar idioma del sistema</string>
+    <string name="settings_filter_group">Filtrar Eventos por Idioma</string>
+    <string name="settings_blocked_group">Autores Bloqueados</string>
+    <string name="settings_blocked_empty">No hay autores bloqueados</string>
+    <string name="settings_unblock">Desbloquear</string>
+
+    <!-- Event types -->
+    <string name="type_convoy">Convoy</string>
+    <string name="type_truck_show">Truck Show</string>
+    <string name="type_exploration">Exploración</string>
+    <string name="type_competition">Competición</string>
+    <string name="type_cruise">Paseo</string>
+    <string name="type_other">Otro</string>
+
+    <!-- Calendar day headers (Mon-Sun) -->
+    <string name="day_mon">L</string>
+    <string name="day_tue">M</string>
+    <string name="day_wed">X</string>
+    <string name="day_thu">J</string>
+    <string name="day_fri">V</string>
+    <string name="day_sat">S</string>
+    <string name="day_sun">D</string>
 </resources>

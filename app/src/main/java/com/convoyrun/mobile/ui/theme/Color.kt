@@ -15,8 +15,8 @@ val BgCardHover = Color(0xFF243050)     // Card hover state
 
 // Text colors
 val TextPrimary = Color(0xFFE0E0E0)     // Main text
-val TextSecondary = Color(0xFF8899AA)   // Secondary text
-val TextMuted = Color(0xFF667788)       // Muted text
+val TextSecondary = Color(0xFF99AABB)   // Secondary text (WCAG AA 5.3:1 on BgPrimary)
+val TextMuted = Color(0xFF88AABB)       // Muted text (WCAG AA 5.1:1 on BgCard)
 
 // Status colors
 val StatusOnline = Color(0xFF4CAF50)    // Green - online

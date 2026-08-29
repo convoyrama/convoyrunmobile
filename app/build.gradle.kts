@@ -9,6 +9,15 @@ android {
     namespace = "com.convoyrun.mobile"
     compileSdk = 35
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(System.getenv("KEYSTORE_FILE") ?: "release.keystore")
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+            keyAlias = System.getenv("KEY_ALIAS") ?: "convoyrun"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+        }
+    }
+
     defaultConfig {
         applicationId = "com.convoyrun.mobile"
         minSdk = 26
@@ -20,6 +29,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -40,9 +50,6 @@ android {
         compose = true
     }
 
-    composeOptions {
-        // Kotlin 2.0+ bundles the Compose compiler plugin; no separate version needed
-    }
 }
 
 dependencies {
@@ -55,6 +62,7 @@ dependencies {
 
     // AndroidX
     implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")

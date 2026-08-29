@@ -79,14 +79,24 @@ jobs:
           print('Icons generated')
           "
 
-      - name: Build unsigned APK
+      - name: Decode keystore
+        if: ${{ github.event.inputs.create_release == 'true' }}
+        run: |
+          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 --decode > app/release.keystore
+
+      - name: Build APK
         run: ./gradlew assembleRelease
+        env:
+          KEYSTORE_FILE: release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       - name: Collect APK
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/release/app-release-unsigned.apk \
-            "dist/ConvoyRun-Mobile-${{ steps.get_version.outputs.version }}.apk"
+          APK=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
+          cp "$APK" "dist/ConvoyRun-Mobile-${{ steps.get_version.outputs.version }}.apk"
 
       - uses: actions/upload-artifact@v4
         with:

@@ -3,8 +3,6 @@ package com.convoyrun.mobile.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
@@ -17,8 +15,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.convoyrun.mobile.R
 import com.convoyrun.mobile.model.ConvoyEvent
 import com.convoyrun.mobile.ui.theme.*
+import androidx.compose.ui.res.stringResource
 import kotlinx.datetime.*
 import java.time.format.TextStyle
 import java.util.Locale
@@ -31,7 +31,6 @@ import java.util.Locale
  * - Days with events are highlighted in accent color
  * - Tap on a day to see events for that day
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarView(
     events: List<ConvoyEvent>,
@@ -42,20 +41,6 @@ fun CalendarView(
     val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
     var currentMonth by remember { mutableStateOf(today.month) }
     var currentYear by remember { mutableStateOf(today.year) }
-
-    // Generate 3 months: previous, current, next
-    val months = remember(currentMonth, currentYear) {
-        val prevMonth = if (currentMonth == Month.JANUARY) Month.DECEMBER else currentMonth - 1
-        val prevYear = if (currentMonth == Month.JANUARY) currentYear - 1 else currentYear
-        val nextMonth = if (currentMonth == Month.DECEMBER) Month.JANUARY else currentMonth + 1
-        val nextYear = if (currentMonth == Month.DECEMBER) currentYear + 1 else currentYear
-
-        listOf(
-            Triple(prevYear, prevMonth, "prev"),
-            Triple(currentYear, currentMonth, "current"),
-            Triple(nextYear, nextMonth, "next")
-        )
-    }
 
     // Map events by day timestamp (start of day)
     val eventsByDay = remember(events) {
@@ -112,21 +97,14 @@ fun CalendarView(
             }
         }
 
-        // Month pager
-        HorizontalPager(
-            state = rememberPagerState(initialPage = 1, pageCount = { 3 }),
-            modifier = Modifier.fillMaxWidth()
-        ) { page ->
-            val (year, month, _) = months[page]
-            MonthView(
-                year = year,
-                month = month,
-                eventsByDay = eventsByDay,
-                selectedDay = selectedDay,
-                onDaySelected = onDaySelected,
-                isCurrentMonth = month == currentMonth && year == currentYear
-            )
-        }
+        // Current month view
+        MonthView(
+            year = currentYear,
+            month = currentMonth,
+            eventsByDay = eventsByDay,
+            selectedDay = selectedDay,
+            onDaySelected = onDaySelected
+        )
     }
 }
 
@@ -139,12 +117,12 @@ private fun MonthView(
     month: Month,
     eventsByDay: Map<Long, List<ConvoyEvent>>,
     selectedDay: Long?,
-    onDaySelected: (Long) -> Unit,
-    isCurrentMonth: Boolean
+    onDaySelected: (Long) -> Unit
 ) {
     val daysInMonth = month.length(isLeapYear(year))
     val firstDayOfMonth = LocalDate(year, month, 1)
     val firstDayOfWeek = firstDayOfMonth.dayOfWeek.value // 1=Monday, 7=Sunday
+    val todayDate = Clock.System.todayIn(TimeZone.currentSystemDefault())
 
     Column(
         modifier = Modifier
@@ -156,7 +134,15 @@ private fun MonthView(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            listOf("L", "M", "X", "J", "V", "S", "D").forEach { day ->
+            listOf(
+                stringResource(R.string.day_mon),
+                stringResource(R.string.day_tue),
+                stringResource(R.string.day_wed),
+                stringResource(R.string.day_thu),
+                stringResource(R.string.day_fri),
+                stringResource(R.string.day_sat),
+                stringResource(R.string.day_sun)
+            ).forEach { day ->
                 Text(
                     text = day,
                     style = MaterialTheme.typography.labelMedium,
@@ -187,7 +173,7 @@ private fun MonthView(
                         val dayTimestamp = date.atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds
                         val hasEvents = eventsByDay.containsKey(dayTimestamp)
                         val isSelected = selectedDay == dayTimestamp
-                        val isToday = isCurrentMonth && dayOfMonth == Clock.System.todayIn(TimeZone.currentSystemDefault()).dayOfMonth
+                        val isToday = date == todayDate
 
                         DayCell(
                             day = dayOfMonth,
@@ -252,7 +238,7 @@ private fun DayCell(
             if (hasEvents && !isSelected) {
                 Box(
                     modifier = Modifier
-                        .size(4.dp)
+                        .size(6.dp)
                         .clip(CircleShape)
                         .background(Accent)
                 )

@@ -61,13 +61,10 @@ impl P2pNodeWrapper {
 
         let subscription = GossipSubscriptionWrapper::new(
             receiver,
+            sender,
             self.inner.neighbor_count.clone(),
             self.inner.is_online.clone(),
         );
-
-        // Store sender for potential future use (read-only mode: we don't publish)
-        // The sender is kept alive as long as the subscription exists
-        std::mem::forget(sender); // Prevent sender from being dropped
 
         Ok(Arc::new(subscription))
     }
@@ -85,16 +82,19 @@ impl P2pNodeWrapper {
 #[derive(uniffi::Object)]
 pub struct GossipSubscriptionWrapper {
     inner: gossip::GossipSubscription,
+    _sender: distributed_topic_tracker::GossipSender,
 }
 
 impl GossipSubscriptionWrapper {
     fn new(
         receiver: gossip::GossipReceiver,
+        sender: distributed_topic_tracker::GossipSender,
         neighbor_count: Arc<std::sync::atomic::AtomicUsize>,
         is_online: Arc<std::sync::atomic::AtomicBool>,
     ) -> Self {
         Self {
             inner: gossip::GossipSubscription::new(receiver, neighbor_count, is_online),
+            _sender: sender,
         }
     }
 }
@@ -201,6 +201,12 @@ impl GossipMessageWrapper {
             _ => None,
         }
     }
+}
+
+/// Verify the ed25519 signature of a convoy event JSON
+#[uniffi::export]
+pub fn verify_convoy_signature(convoy_json: String) -> bool {
+    gossip::verify_convoy_signature(&convoy_json)
 }
 
 /// Delete convoy info for UniFFI

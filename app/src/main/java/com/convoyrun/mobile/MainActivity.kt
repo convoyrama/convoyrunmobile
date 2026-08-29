@@ -3,10 +3,14 @@ package com.convoyrun.mobile
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.convoyrun.mobile.data.PreferencesManager
 import com.convoyrun.mobile.model.ConvoyEvent
 import com.convoyrun.mobile.p2p.P2pManager
 import com.convoyrun.mobile.ui.*
@@ -22,23 +27,26 @@ import kotlinx.datetime.*
 
 class MainActivity : ComponentActivity() {
 
+    private lateinit var prefsManager: PreferencesManager
     private lateinit var p2pManager: P2pManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        p2pManager = P2pManager(applicationContext)
+        prefsManager = PreferencesManager(applicationContext)
+        p2pManager = P2pManager(applicationContext, prefsManager)
+
+        applyLocaleOverride()
 
         setContent {
             ConvoyRunTheme {
-                ConvoyRunApp(p2pManager)
+                ConvoyRunApp(p2pManager, prefsManager)
             }
         }
     }
 
     override fun onStart() {
         super.onStart()
-        // Start P2P node when app comes to foreground
         lifecycleScope.launch {
             p2pManager.start()
         }
@@ -46,21 +54,38 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        // Stop P2P node when app goes to background
-        p2pManager.stop()
+        lifecycleScope.launch {
+            p2pManager.stop()
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         p2pManager.destroy()
     }
+
+    private fun applyLocaleOverride() {
+        val lang = prefsManager.getAppLanguage()
+        if (lang != null) {
+            val locales = LocaleListCompat.forLanguageTags(lang)
+            AppCompatDelegate.setApplicationLocales(locales)
+        }
+    }
 }
 
-/**
- * Main ConvoyRun app composable
- */
 @Composable
-fun ConvoyRunApp(p2pManager: P2pManager) {
+fun ConvoyRunApp(p2pManager: P2pManager, prefsManager: PreferencesManager) {
+    var showSettings by remember { mutableStateOf(false) }
+
+    if (showSettings) {
+        SettingsScreen(
+            prefsManager = prefsManager,
+            p2pManager = p2pManager,
+            onBack = { showSettings = false }
+        )
+        return
+    }
+
     val status by p2pManager.status.collectAsStateWithLifecycle()
     val peerCount by p2pManager.peerCount.collectAsStateWithLifecycle()
     val events by p2pManager.events.collectAsStateWithLifecycle()
@@ -74,14 +99,12 @@ fun ConvoyRunApp(p2pManager: P2pManager) {
     }
     var selectedEvent by remember { mutableStateOf<ConvoyEvent?>(null) }
 
-    // Get events for selected day
     val dayEvents = remember(selectedDay, events) {
         p2pManager.getEventsForDate(selectedDay)
     }
 
     Scaffold(
         topBar = {
-            // App bar with title and status
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -103,10 +126,23 @@ fun ConvoyRunApp(p2pManager: P2pManager) {
                     )
                 }
 
-                StatusIndicator(
-                    status = status,
-                    peerCount = peerCount
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    StatusIndicator(
+                        status = status,
+                        peerCount = peerCount
+                    )
+                    IconButton(
+                        onClick = { showSettings = true },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = stringResource(R.string.settings_title),
+                            tint = TextSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
         }
     ) { paddingValues ->
@@ -116,7 +152,6 @@ fun ConvoyRunApp(p2pManager: P2pManager) {
                 .background(BgPrimary)
                 .padding(paddingValues)
         ) {
-            // Calendar view (takes 50% of screen)
             CalendarView(
                 events = events,
                 onDaySelected = { selectedDay = it },
@@ -126,13 +161,8 @@ fun ConvoyRunApp(p2pManager: P2pManager) {
                     .weight(0.5f)
             )
 
-            // Divider
-            HorizontalDivider(
-                color = Divider,
-                thickness = 1.dp
-            )
+            HorizontalDivider(color = Divider, thickness = 1.dp)
 
-            // Event list for selected day (takes 50% of screen)
             EventListView(
                 events = dayEvents,
                 onEventClicked = { selectedEvent = it },
@@ -143,11 +173,14 @@ fun ConvoyRunApp(p2pManager: P2pManager) {
         }
     }
 
-    // Event detail modal
     selectedEvent?.let { event ->
         EventDetailView(
             event = event,
-            onDismiss = { selectedEvent = null }
+            onDismiss = { selectedEvent = null },
+            onBlockAuthor = { peerId, nick ->
+                p2pManager.blockAuthor(peerId, nick)
+                selectedEvent = null
+            }
         )
     }
 }

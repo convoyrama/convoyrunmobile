@@ -6,7 +6,7 @@
 use anyhow::{Context, Result};
 use iroh::{endpoint::presets, protocol::Router, Endpoint, SecretKey};
 use iroh_gossip::{net::Gossip, ALPN as GOSSIP_ALPN};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
@@ -29,11 +29,9 @@ const IDENTITY_FILE: &str = "node_identity.key";
 
 /// P2P node state - holds all iroh resources
 pub struct P2pNode {
-    pub endpoint: Endpoint,
     pub gossip: Gossip,
     pub router: Router,
     pub secret_key: SecretKey,
-    pub data_dir: PathBuf,
     pub neighbor_count: Arc<AtomicUsize>,
     pub is_online: Arc<AtomicBool>,
 }
@@ -69,11 +67,9 @@ impl P2pNode {
         eprintln!("[P2P] Node initialized with peerId: {}", peer_id);
 
         Ok(Self {
-            endpoint,
             gossip,
             router,
             secret_key,
-            data_dir: data_dir.to_path_buf(),
             neighbor_count: Arc::new(AtomicUsize::new(0)),
             is_online: Arc::new(AtomicBool::new(false)),
         })

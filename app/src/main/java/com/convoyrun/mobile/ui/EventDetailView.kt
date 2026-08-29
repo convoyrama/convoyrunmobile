@@ -46,6 +46,7 @@ import java.util.*
 fun EventDetailView(
     event: ConvoyEvent,
     onDismiss: () -> Unit,
+    onBlockAuthor: (peerId: String, nick: String) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -53,8 +54,7 @@ fun EventDetailView(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = BgSecondary,
-        dragHandle = null
+        containerColor = BgSecondary
     ) {
         Column(
             modifier = modifier
@@ -84,14 +84,25 @@ fun EventDetailView(
                     color = TextPrimary
                 )
 
+                IconButton(
+                    onClick = { onBlockAuthor(event.peerId, event.nickname) }
+                ) {
+                    Icon(
+                        Icons.Default.Block,
+                        contentDescription = stringResource(R.string.block_author),
+                        tint = EventTypeCompetition
+                    )
+                }
+
                 IconButton(onClick = {
-                    // Share event
-                    val shareText = buildShareText(event)
-                    val intent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, shareText)
-                    }
-                    context.startActivity(Intent.createChooser(intent, null))
+                    try {
+                        val shareText = buildShareText(event)
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, shareText)
+                        }
+                        context.startActivity(Intent.createChooser(intent, null))
+                    } catch (_: Exception) { /* no app to share */ }
                 }) {
                     Icon(
                         Icons.Default.Share,
@@ -124,7 +135,7 @@ fun EventDetailView(
                     color = getEventTypeColor(event.event.eventType).copy(alpha = 0.2f)
                 ) {
                     Text(
-                        text = getEventTypeName(event.event.eventType),
+                        text = stringResource(getEventTypeNameRes(event.event.eventType)),
                         style = MaterialTheme.typography.labelLarge,
                         color = getEventTypeColor(event.event.eventType),
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
@@ -205,8 +216,10 @@ fun EventDetailView(
                     content = event.event.link,
                     isLink = true,
                     onLinkClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(event.event.link))
-                        context.startActivity(intent)
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(event.event.link))
+                            context.startActivity(intent)
+                        } catch (_: Exception) { /* no browser or invalid URL */ }
                     }
                 )
             }
@@ -227,8 +240,10 @@ fun EventDetailView(
                     contentDescription = stringResource(R.string.detail_flyer),
                     modifier = Modifier
                         .fillMaxWidth()
+                        .aspectRatio(16f / 9f)
                         .padding(horizontal = 16.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(12.dp)),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
                 )
             }
 
@@ -290,12 +305,16 @@ private fun buildShareText(event: ConvoyEvent): String {
     return buildString {
         appendLine(event.event.name)
         appendLine()
+        appendLine("🎮 ${event.event.game.name} — ${event.event.mode.name}")
         appendLine("📅 ${formatFullMeetingTime(event.schedule.meetingTimestamp, event.schedule.ianaTimeZone)}")
         if (event.event.server.isNotEmpty()) {
             appendLine("🖥️ ${event.event.server}")
         }
         if (event.event.route.startCity.isNotEmpty() || event.event.route.destCity.isNotEmpty()) {
             appendLine("📍 ${buildRouteText(event.event.route)}")
+        }
+        if (event.event.link.isNotEmpty()) {
+            appendLine("🔗 ${event.event.link}")
         }
         if (event.event.description.isNotEmpty()) {
             appendLine()
@@ -310,9 +329,17 @@ private fun buildShareText(event: ConvoyEvent): String {
  * Format meeting time with timezone
  */
 private fun formatFullMeetingTime(timestamp: Long, ianaTimeZone: String): String {
-    val sdf = SimpleDateFormat("EEEE, d MMMM yyyy HH:mm", Locale.getDefault())
     val date = Date(timestamp * 1000)
-    return "${sdf.format(date)} (${ianaTimeZone.split("/").last().replace("_", " ")})"
+    val tzLabel = ianaTimeZone.split("/").last().replace("_", " ")
+    return try {
+        val zoneId = java.time.ZoneId.of(ianaTimeZone)
+        val sdf = SimpleDateFormat("EEEE, d MMMM yyyy HH:mm", Locale.getDefault())
+        sdf.timeZone = java.util.TimeZone.getTimeZone(zoneId)
+        "${sdf.format(date)} ($tzLabel)"
+    } catch (_: Exception) {
+        val sdf = SimpleDateFormat("EEEE, d MMMM yyyy HH:mm", Locale.getDefault())
+        "${sdf.format(date)} ($tzLabel)"
+    }
 }
 
 /**
@@ -336,41 +363,3 @@ private fun buildRouteText(route: Route): String {
     }
 }
 
-/**
- * Get event type display name
- */
-private fun getEventTypeName(type: EventType): String {
-    return when (type) {
-        EventType.Convoy -> "Convoy"
-        EventType.TruckShow -> "Truck Show"
-        EventType.Exploration -> "Exploration"
-        EventType.Competition -> "Competition"
-        EventType.Cruise -> "Cruise"
-        EventType.Other -> "Other"
-    }
-}
-
-/**
- * Get event type color
- */
-private fun getEventTypeColor(type: EventType): androidx.compose.ui.graphics.Color {
-    return when (type) {
-        EventType.Convoy -> EventTypeConvoy
-        EventType.TruckShow -> EventTypeTruckShow
-        EventType.Exploration -> EventTypeExploration
-        EventType.Competition -> EventTypeCompetition
-        EventType.Cruise -> EventTypeCruise
-        EventType.Other -> EventTypeOther
-    }
-}
-
-/**
- * Get game color
- */
-private fun getGameColor(game: Game): androidx.compose.ui.graphics.Color {
-    return when (game) {
-        Game.ATS -> GameATS
-        Game.ETS2 -> GameETS2
-        Game.Other -> TextSecondary
-    }
-}

@@ -17,8 +17,6 @@ path = "src/bin/uniffi-bindgen.rs"
 [dependencies]
 # Core iroh (transport + networking)
 iroh = "1.0"
-iroh-base = "1.0"
-iroh-tickets = "1.0"
 
 # Gossip protocol (topic subscription + broadcast)
 iroh-gossip = "0.101"
@@ -40,8 +38,6 @@ base64 = "0.22"
 
 # Async runtime
 tokio = { version = "1", features = ["full"] }
-n0-future = "0.3"
-futures-lite = "2.3"
 chrono = "0.4"
 
 # UniFFI bindings generation

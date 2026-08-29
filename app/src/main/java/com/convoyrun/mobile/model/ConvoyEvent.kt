@@ -1,5 +1,6 @@
 package com.convoyrun.mobile.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 
@@ -58,7 +59,12 @@ data class FlyerData(
  */
 @Serializable
 enum class EventType {
-    Convoy, TruckShow, Exploration, Competition, Cruise, Other
+    @SerialName("convoy") Convoy,
+    @SerialName("truck_show") TruckShow,
+    @SerialName("exploration") Exploration,
+    @SerialName("competition") Competition,
+    @SerialName("cruise") Cruise,
+    @SerialName("other") Other
 }
 
 /**
@@ -74,34 +80,26 @@ enum class Game {
  */
 @Serializable
 enum class GameMode {
-    Simulation, Realistic, Arcade, Race, Other
+    @SerialName("simulation") Simulation,
+    @SerialName("realistic") Realistic,
+    @SerialName("arcade") Arcade,
+    @SerialName("race") Race,
+    @SerialName("other") Other
 }
 
 /**
  * Gossip message types (matches desktop GossipMessage enum)
  */
-@Serializable
 sealed class GossipMessage {
-    @Serializable
     data class Convoy(val data: String) : GossipMessage()
-
-    @Serializable
     data class Vote(val data: String) : GossipMessage()
-
-    @Serializable
     data class DeleteConvoy(
         val convoyId: String,
         val peerId: String,
         val signature: String
     ) : GossipMessage()
-
-    @Serializable
     data class Channel(val data: String) : GossipMessage()
-
-    @Serializable
     data class Blacklist(val data: String) : GossipMessage()
-
-    @Serializable
     data class Trustlist(val data: String) : GossipMessage()
 }
 
@@ -150,10 +148,12 @@ fun parseGossipMessage(json: String): GossipMessage? {
 /**
  * Parse a ConvoyEvent from JSON string
  */
+private val lenientJson = Json { ignoreUnknownKeys = true }
+
 fun parseConvoyEvent(json: String): ConvoyEvent? {
     return try {
-        Json.decodeFromString<ConvoyEvent>(json)
-    } catch (e: Exception) {
+        lenientJson.decodeFromString<ConvoyEvent>(json)
+    } catch (_: Exception) {
         null
     }
 }

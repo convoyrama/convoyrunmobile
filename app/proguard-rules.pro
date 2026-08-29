@@ -7,8 +7,8 @@
 # Keep data classes for serialization
 -keep class com.convoyrun.mobile.model.** { *; }
 
-# Keep Compose classes
--keep class androidx.compose.** { *; }
+# Keep JNA (required for native library loading)
+-keep class com.sun.jna.** { *; }
 
 # Keep Kotlinx Serialization
 -keepattributes *Annotation*, InnerClasses

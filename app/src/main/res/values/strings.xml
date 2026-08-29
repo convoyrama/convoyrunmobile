@@ -32,4 +32,33 @@
     <!-- Actions -->
     <string name="share">Share</string>
     <string name="close">Close</string>
+    <string name="block_author">Block Author</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_back">Back</string>
+    <string name="settings_lang_group">App Language</string>
+    <string name="settings_lang_label">Language</string>
+    <string name="settings_lang_sub">Override system language</string>
+    <string name="settings_filter_group">Filter Events by Language</string>
+    <string name="settings_blocked_group">Blocked Authors</string>
+    <string name="settings_blocked_empty">No blocked authors</string>
+    <string name="settings_unblock">Unblock</string>
+
+    <!-- Event types -->
+    <string name="type_convoy">Convoy</string>
+    <string name="type_truck_show">Truck Show</string>
+    <string name="type_exploration">Exploration</string>
+    <string name="type_competition">Competition</string>
+    <string name="type_cruise">Cruise</string>
+    <string name="type_other">Other</string>
+
+    <!-- Calendar day headers (Mon-Sun) -->
+    <string name="day_mon">M</string>
+    <string name="day_tue">T</string>
+    <string name="day_wed">W</string>
+    <string name="day_thu">T</string>
+    <string name="day_fri">F</string>
+    <string name="day_sat">S</string>
+    <string name="day_sun">S</string>
 </resources>

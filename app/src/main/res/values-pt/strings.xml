@@ -10,7 +10,7 @@
     <string name="status_offline">Offline</string>
 
     <!-- Navigation -->
-    <string name="tab_calendar">Calendario</string>
+    <string name="tab_calendar">Calendário</string>
     <string name="tab_list">Lista</string>
 
     <!-- Filters -->
@@ -20,10 +20,10 @@
 
     <!-- Event Details -->
     <string name="event_details">Detalhes do Evento</string>
-    <string name="detail_meeting">Horario do Encontro</string>
+    <string name="detail_meeting">Horário do Encontro</string>
     <string name="detail_route">Rota</string>
     <string name="detail_server">Servidor</string>
-    <string name="detail_description">Descricao</string>
+    <string name="detail_description">Descrição</string>
     <string name="detail_languages">Idiomas</string>
     <string name="detail_link">Link</string>
     <string name="detail_creator">Criado por</string>
@@ -32,4 +32,33 @@
     <!-- Actions -->
     <string name="share">Compartilhar</string>
     <string name="close">Fechar</string>
+    <string name="block_author">Bloquear Autor</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Configurações</string>
+    <string name="settings_back">Voltar</string>
+    <string name="settings_lang_group">Idioma do App</string>
+    <string name="settings_lang_label">Idioma</string>
+    <string name="settings_lang_sub">Substituir idioma do sistema</string>
+    <string name="settings_filter_group">Filtrar Eventos por Idioma</string>
+    <string name="settings_blocked_group">Autores Bloqueados</string>
+    <string name="settings_blocked_empty">Nenhum autor bloqueado</string>
+    <string name="settings_unblock">Desbloquear</string>
+
+    <!-- Event types -->
+    <string name="type_convoy">Convoy</string>
+    <string name="type_truck_show">Truck Show</string>
+    <string name="type_exploration">Exploração</string>
+    <string name="type_competition">Competição</string>
+    <string name="type_cruise">Passeio</string>
+    <string name="type_other">Outro</string>
+
+    <!-- Calendar day headers (Mon-Sun) -->
+    <string name="day_mon">S</string>
+    <string name="day_tue">T</string>
+    <string name="day_wed">Q</string>
+    <string name="day_thu">Q</string>
+    <string name="day_fri">S</string>
+    <string name="day_sat">S</string>
+    <string name="day_sun">D</string>
 </resources>
