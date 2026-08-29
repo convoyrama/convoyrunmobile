@@ -50,21 +50,34 @@ jobs:
 
       - name: Generate launcher icons
         run: |
-          SRC="mobile-ffi/icons/icon.png"
-          RES="app/src/main/res"
-          SIZES="mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192"
+          python3 -c "
+          from PIL import Image, ImageDraw
+          import os
 
-          for entry in $SIZES; do
-            DENSITY=${entry%%:*}
-            SIZE=${entry##*:}
-            mkdir -p "$RES/mipmap-$DENSITY"
-            magick "$SRC" -resize ${SIZE}x${SIZE} "$RES/mipmap-$DENSITY/ic_launcher.png"
-            # Round icon: circle crop
-            magick "$SRC" -resize ${SIZE}x${SIZE} -gravity center -crop ${SIZE}x${SIZE}+0+0 \
-              \( +clone -threshold -1 -negate -fill white -draw "circle $((SIZE/2)),$((SIZE/2)) $((SIZE/2)),0" \) \
-              -alpha off -compose CopyOpacity -composite "$RES/mipmap-$DENSITY/ic_launcher_round.png"
-          done
-          echo "Icons generated"
+          src = 'mobile-ffi/icons/icon.png'
+          res = 'app/src/main/res'
+          sizes = {'mdpi': 48, 'hdpi': 72, 'xhdpi': 96, 'xxhdpi': 144, 'xxxhdpi': 192}
+
+          img = Image.open(src).convert('RGBA')
+
+          for density, size in sizes.items():
+              out_dir = f'{res}/mipmap-{density}'
+              os.makedirs(out_dir, exist_ok=True)
+
+              # Square icon
+              square = img.resize((size, size), Image.LANCZOS)
+              square.save(f'{out_dir}/ic_launcher.png')
+
+              # Round icon: circle crop
+              mask = Image.new('L', (size, size), 0)
+              draw = ImageDraw.Draw(mask)
+              draw.ellipse((0, 0, size-1, size-1), fill=255)
+              round_icon = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+              round_icon.paste(square, (0, 0), mask)
+              round_icon.save(f'{out_dir}/ic_launcher_round.png')
+
+          print('Icons generated')
+          "
 
       - name: Build Rust FFI (arm64-v8a)
         working-directory: mobile-ffi
