@@ -55,8 +55,15 @@ uniffi {
     }
 }
 
-// Fix: declare explicit dependency between UniFFI proguard generation and consumer export
+// Fix task ordering: ensure cargo builds complete BEFORE UniFFI bindings are generated
+// Without this, the Rust cache can restore a stale .so, bindings are generated from it,
+// then cargo rebuilds the .so with new code → contract version mismatch at runtime.
 tasks.configureEach {
+    if (name == "buildUniffiBindings") {
+        dependsOn("cargoBuildAndroidArm64Release")
+        dependsOn("cargoBuildAndroidArmV7Release")
+        dependsOn("cargoBuildAndroidX86_64Release")
+    }
     if (name == "exportReleaseConsumerProguardFiles") {
         dependsOn("generateUniffiProguardRules")
     }
