@@ -6,6 +6,15 @@
 # Keep data classes for serialization
 -keep class com.convoyrun.mobile.model.** { *; }
 
+# Keep UniFFI generated bindings (JNA structures need field names preserved)
+-keep class uniffi.convoyrun_mobile_ffi.** { *; }
+-keepclassmembers class uniffi.convoyrun_mobile_ffi.** { *; }
+
+# Keep JNA Structure field order methods
+-keepclassmembers class * extends com.sun.jna.Structure {
+    java.util.List getFieldOrder();
+}
+
 # Keep Kotlinx Serialization
 -keepattributes *Annotation*, InnerClasses
 -dontnote kotlinx.serialization.AnnotationsKt
