@@ -1,4 +1,3 @@
-import gobley.gradle.Variant
 import gobley.gradle.cargo.dsl.*
 
 plugins {
@@ -43,9 +42,6 @@ cargo {
         android {
             dynamicLibraries.addAll("c++_shared")
         }
-    }
-    variants {
-        features.addAll("default")
     }
 }
 
