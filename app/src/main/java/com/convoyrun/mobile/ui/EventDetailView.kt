@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -84,13 +85,14 @@ fun EventDetailView(
                     color = TextPrimary
                 )
 
-                IconButton(
-                    onClick = { onBlockAuthor(event.peerId, event.nickname) }
+                TextButton(
+                    onClick = { onBlockAuthor(event.peerId, event.nickname) },
+                    colors = ButtonDefaults.textButtonColors(contentColor = EventTypeCompetition)
                 ) {
-                    Icon(
-                        Icons.Default.Warning,
-                        contentDescription = stringResource(R.string.block_author),
-                        tint = EventTypeCompetition
+                    Text(
+                        text = stringResource(R.string.block_author),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
 
