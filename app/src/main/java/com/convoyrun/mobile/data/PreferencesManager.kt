@@ -28,11 +28,13 @@ class PreferencesManager(context: Context) {
         prefs.getString("app_language", null)
 
     fun setAppLanguage(language: String?) {
+        val editor = prefs.edit()
         if (language == null) {
-            prefs.remove("app_language")
+            editor.remove("app_language")
         } else {
-            prefs.putString("app_language", language)
+            editor.putString("app_language", language)
         }
+        editor.apply()
     }
 
     // --- Language Filter ---

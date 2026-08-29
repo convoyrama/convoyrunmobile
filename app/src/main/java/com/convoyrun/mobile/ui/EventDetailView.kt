@@ -88,7 +88,7 @@ fun EventDetailView(
                     onClick = { onBlockAuthor(event.peerId, event.nickname) }
                 ) {
                     Icon(
-                        Icons.Default.Block,
+                        Icons.Default.DoNotDisturb,
                         contentDescription = stringResource(R.string.block_author),
                         tint = EventTypeCompetition
                     )

@@ -24,18 +24,18 @@ pub struct P2pNodeWrapper {
     inner: p2p::P2pNode,
 }
 
+/// Create a new P2P node (factory function — async constructor)
+#[uniffi::export]
+pub async fn create_p2p_node(data_dir: String) -> Result<Arc<P2pNodeWrapper>, P2pError> {
+    let path = std::path::Path::new(&data_dir);
+    let node = p2p::P2pNode::init(path)
+        .await
+        .map_err(|e| P2pError::InitError(e.to_string()))?;
+    Ok(Arc::new(P2pNodeWrapper { inner: node }))
+}
+
 #[uniffi::export]
 impl P2pNodeWrapper {
-    /// Create a new P2P node
-    #[uniffi::constructor]
-    pub async fn new(data_dir: String) -> Result<Arc<Self>, P2pError> {
-        let path = std::path::Path::new(&data_dir);
-        let node = p2p::P2pNode::init(path)
-            .await
-            .map_err(|e| P2pError::InitError(e.to_string()))?;
-        Ok(Arc::new(Self { inner: node }))
-    }
-
     /// Get the node's peer ID
     pub fn peer_id(&self) -> String {
         self.inner.peer_id()

@@ -6,10 +6,16 @@ import com.convoyrun.mobile.model.*
 import uniffi.convoyrun_mobile_ffi.P2pNodeWrapper
 import uniffi.convoyrun_mobile_ffi.GossipSubscriptionWrapper
 import uniffi.convoyrun_mobile_ffi.verifyConvoySignature
+import uniffi.convoyrun_mobile_ffi.createP2pNode
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
 
 /**
@@ -63,8 +69,8 @@ class P2pManager(
             // Initialize Android context (for DNS resolver)
             ConvoyRunP2p.installAndroidContext(context.applicationContext)
 
-            // Create P2P node (async constructor via UniFFI)
-            val nodeWrapper = P2pNodeWrapper.new(dataDir.absolutePath)
+            // Create P2P node (factory function via UniFFI)
+            val nodeWrapper = createP2pNode(dataDir.absolutePath)
             node = nodeWrapper
 
             // Join the gossip topic
