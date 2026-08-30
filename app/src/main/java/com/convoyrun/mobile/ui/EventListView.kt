@@ -1,11 +1,14 @@
 package com.convoyrun.mobile.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -13,6 +16,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -134,15 +140,27 @@ fun EventListView(
                 )
             }
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(filteredEvents, key = { it.id }) { event ->
-                    EventCard(
-                        event = event,
-                        onClick = { onEventClicked(event) }
+            val listState = rememberLazyListState()
+            Box(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(filteredEvents, key = { it.id }) { event ->
+                        EventCard(
+                            event = event,
+                            onClick = { onEventClicked(event) }
+                        )
+                    }
+                }
+                
+                // Scrollbar indicator
+                if (filteredEvents.size > 3) {
+                    ScrollbarIndicator(
+                        modifier = Modifier.align(Alignment.CenterEnd),
+                        listState = listState
                     )
                 }
             }
@@ -300,4 +318,46 @@ private fun EventCard(
 private fun formatMeetingTime(timestamp: Long): String {
     val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
     return sdf.format(Date(timestamp * 1000))
+}
+
+/**
+ * Custom scrollbar indicator
+ */
+@Composable
+private fun ScrollbarIndicator(
+    modifier: Modifier = Modifier,
+    listState: LazyListState
+) {
+    val firstVisibleItemIndex = listState.firstVisibleItemIndex
+    val totalItems = listState.layoutInfo.totalItemsCount
+    
+    if (totalItems > 0) {
+        val scrollPercentage = firstVisibleItemIndex.toFloat() / (totalItems - 1).coerceAtLeast(1)
+        
+        Canvas(
+            modifier = modifier
+                .width(4.dp)
+                .fillMaxHeight()
+                .padding(vertical = 8.dp)
+        ) {
+            val trackHeight = size.height
+            val thumbHeight = (trackHeight * 0.2f).coerceAtLeast(20.dp.toPx())
+            val thumbY = scrollPercentage * (trackHeight - thumbHeight)
+            
+            // Track
+            drawRoundRect(
+                color = Divider.copy(alpha = 0.3f),
+                size = size.copy(width = 4.dp.toPx()),
+                cornerRadius = CornerRadius(2.dp.toPx())
+            )
+            
+            // Thumb
+            drawRoundRect(
+                color = Accent.copy(alpha = 0.6f),
+                size = Size(4.dp.toPx(), thumbHeight),
+                topLeft = Offset(0f, thumbY),
+                cornerRadius = CornerRadius(2.dp.toPx())
+            )
+        }
+    }
 }

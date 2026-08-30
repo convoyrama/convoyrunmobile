@@ -110,7 +110,10 @@ class P2pManager(
 
             while (isActive) {
                 try {
-                    // Update peer count
+                    // Wait for next event with timeout to allow periodic peer count updates
+                    val event = withTimeoutOrNull(5000) { sub.nextEvent() }
+
+                    // Always update peer count (even if no event received)
                     val peerCount = sub.peerCount().toInt()
                     _peerCount.value = peerCount
 
@@ -125,8 +128,8 @@ class P2pManager(
                         _status.value = newStatus
                     }
 
-                    // Wait for next event
-                    val event = sub.nextEvent() ?: continue
+                    // If no event (timeout), continue loop
+                    if (event == null) continue
 
                     android.util.Log.i("P2pManager", "Received gossip event from ${event.sender()}")
 

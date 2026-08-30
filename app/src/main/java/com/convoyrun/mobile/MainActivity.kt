@@ -143,6 +143,7 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
                 .fillMaxSize()
                 .background(BgPrimary)
                 .padding(paddingValues)
+                .windowInsetsPadding(WindowInsets.navigationBars)
         ) {
             CalendarView(
                 events = events?.value ?: emptyList(),

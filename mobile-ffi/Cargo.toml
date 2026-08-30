@@ -1,8 +1,8 @@
 [package]
-name = "convoyrun-mobile-ffi"
-version = "0.0.2"
+name = "convoyrun-mobile"
+version = "0.0.3"
 edition = "2021"
-description = "ConvoyRun Mobile FFI - iroh P2P layer for Android"
+description = "ConvoyRun Mobile"
 license = "MIT OR Apache-2.0"
 
 [lib]
