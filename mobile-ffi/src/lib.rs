@@ -127,6 +127,15 @@ impl GossipSubscriptionWrapper {
         })
     }
 
+    /// Broadcast raw JSON content to all connected peers
+    pub fn broadcast(&self, content: String) -> Result<(), P2pError> {
+        get_runtime().block_on(async {
+            let data = content.into_bytes();
+            self._sender.broadcast(data).await
+                .map_err(|e| P2pError::BroadcastError(e.to_string()))
+        })
+    }
+
     /// Get the number of connected peers
     pub fn peer_count(&self) -> u32 {
         self.inner.peer_count()
@@ -252,4 +261,7 @@ pub enum P2pError {
 
     #[error("Invalid data: {0}")]
     InvalidData(String),
+
+    #[error("Failed to broadcast: {0}")]
+    BroadcastError(String),
 }

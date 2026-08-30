@@ -1,4 +1,4 @@
-package com.convoyrun.mobile.ui
+package com.convoyrama.convoyrun.ui
 
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
@@ -21,10 +21,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.convoyrun.mobile.R
-import com.convoyrun.mobile.data.PreferencesManager
-import com.convoyrun.mobile.p2p.P2pManager
-import com.convoyrun.mobile.ui.theme.*
+import com.convoyrama.convoyrun.R
+import com.convoyrama.convoyrun.data.PreferencesManager
+import com.convoyrama.convoyrun.p2p.P2pManager
+import com.convoyrama.convoyrun.ui.theme.*
 
 @Composable
 fun SettingsScreen(

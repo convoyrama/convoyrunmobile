@@ -1,4 +1,4 @@
-package com.convoyrun.mobile.ui
+package com.convoyrama.convoyrun.ui
 
 import android.content.Intent
 import android.net.Uri
@@ -20,9 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.convoyrun.mobile.R
-import com.convoyrun.mobile.model.*
-import com.convoyrun.mobile.ui.theme.*
+import com.convoyrama.convoyrun.R
+import com.convoyrama.convoyrun.model.*
+import com.convoyrama.convoyrun.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
 

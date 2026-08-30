@@ -1,10 +1,10 @@
 # ConvoyRun Mobile ProGuard Rules
 
 # Keep JNI entry point
--keep class com.convoyrun.mobile.p2p.ConvoyRunP2p { *; }
+-keep class com.convoyrama.convoyrun.p2p.ConvoyRunP2p { *; }
 
 # Keep data classes for serialization
--keep class com.convoyrun.mobile.model.** { *; }
+-keep class com.convoyrama.convoyrun.model.** { *; }
 
 # Keep UniFFI generated bindings (JNA structures need field names preserved)
 -keep class uniffi.convoyrun_mobile_ffi.** { *; }
@@ -19,10 +19,10 @@
 -keepattributes *Annotation*, InnerClasses
 -dontnote kotlinx.serialization.AnnotationsKt
 
--keepclassmembers @kotlinx.serialization.Serializable class com.convoyrun.mobile.model.** {
+-keepclassmembers @kotlinx.serialization.Serializable class com.convoyrama.convoyrun.model.** {
     *** Companion;
 }
--keepclasseswithmembers class com.convoyrun.mobile.model.** {
+-keepclasseswithmembers class com.convoyrama.convoyrun.model.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
 

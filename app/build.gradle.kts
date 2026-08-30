@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.convoyrun.mobile"
+    namespace = "com.convoyrama.convoyrun"
     compileSdk = 35
 
     signingConfigs {
@@ -22,7 +22,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.convoyrun.mobile"
+        applicationId = "com.convoyrama.convoyrun"
         minSdk = 26
         targetSdk = 35
         versionCode = 4

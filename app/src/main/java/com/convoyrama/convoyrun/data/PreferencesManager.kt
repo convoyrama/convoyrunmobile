@@ -1,4 +1,4 @@
-package com.convoyrun.mobile.data
+package com.convoyrama.convoyrun.data
 
 import android.content.Context
 import android.content.SharedPreferences

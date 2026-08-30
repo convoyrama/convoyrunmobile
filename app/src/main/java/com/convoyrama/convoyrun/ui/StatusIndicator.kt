@@ -1,4 +1,4 @@
-package com.convoyrun.mobile.ui
+package com.convoyrama.convoyrun.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
@@ -14,8 +14,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.convoyrun.mobile.R
-import com.convoyrun.mobile.p2p.P2pManager
+import com.convoyrama.convoyrun.R
+import com.convoyrama.convoyrun.p2p.P2pManager
 
 /**
  * Status indicator component

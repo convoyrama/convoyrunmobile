@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.convoyrun.mobile.ffi"
+    namespace = "com.convoyrama.convoyrun.ffi"
     compileSdk = 35
     defaultConfig {
         minSdk = 26

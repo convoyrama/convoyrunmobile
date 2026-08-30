@@ -1,4 +1,4 @@
-package com.convoyrun.mobile
+package com.convoyrama.convoyrun
 
 import android.app.Application
 

@@ -1,4 +1,4 @@
-package com.convoyrun.mobile.ui
+package com.convoyrama.convoyrun.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
@@ -18,31 +18,44 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.convoyrun.mobile.R
-import com.convoyrun.mobile.model.*
-import com.convoyrun.mobile.ui.theme.*
+import com.convoyrama.convoyrun.R
+import com.convoyrama.convoyrun.model.*
+import com.convoyrama.convoyrun.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
 fun EventListView(
-    events: List<ConvoyEvent>,
+    todayEvents: List<ConvoyEvent>,
+    upcomingEvents: List<ConvoyEvent>,
     onEventClicked: (ConvoyEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
-    val filteredEvents = remember(events, searchQuery) {
-        events.filter { event ->
+    val filteredToday = remember(todayEvents, searchQuery) {
+        todayEvents.filter { event ->
             searchQuery.isEmpty() ||
                     event.event.name.contains(searchQuery, ignoreCase = true) ||
                     event.event.server.contains(searchQuery, ignoreCase = true) ||
                     event.nickname.contains(searchQuery, ignoreCase = true)
-        }.sortedBy { it.schedule.meetingTimestamp }
+        }
     }
+
+    val filteredUpcoming = remember(upcomingEvents, searchQuery) {
+        upcomingEvents.filter { event ->
+            searchQuery.isEmpty() ||
+                    event.event.name.contains(searchQuery, ignoreCase = true) ||
+                    event.event.server.contains(searchQuery, ignoreCase = true) ||
+                    event.nickname.contains(searchQuery, ignoreCase = true)
+        }
+    }
+
+    val hasAnyEvents = filteredToday.isNotEmpty() || filteredUpcoming.isNotEmpty()
 
     Column(modifier = modifier) {
         // Search bar
@@ -68,8 +81,7 @@ fun EventListView(
             )
         )
 
-        // Event list
-        if (filteredEvents.isEmpty()) {
+        if (!hasAnyEvents) {
             Box(
                 modifier = Modifier.fillMaxSize().padding(32.dp),
                 contentAlignment = Alignment.Center
@@ -89,11 +101,27 @@ fun EventListView(
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(filteredEvents, key = { it.id }) { event ->
-                        EventCard(event = event, onClick = { onEventClicked(event) })
+                    // Today section
+                    if (filteredToday.isNotEmpty()) {
+                        item {
+                            SectionHeader(text = stringResource(R.string.section_today))
+                        }
+                        items(filteredToday, key = { "today-${it.id}" }) { event ->
+                            EventCard(event = event, onClick = { onEventClicked(event) })
+                        }
+                    }
+
+                    // Upcoming section
+                    if (filteredUpcoming.isNotEmpty()) {
+                        item {
+                            SectionHeader(text = stringResource(R.string.section_upcoming))
+                        }
+                        items(filteredUpcoming, key = { "upcoming-${it.id}" }) { event ->
+                            EventCard(event = event, onClick = { onEventClicked(event) })
+                        }
                     }
                 }
-                if (filteredEvents.size > 3) {
+                if ((filteredToday.size + filteredUpcoming.size) > 3) {
                     ScrollbarIndicator(
                         modifier = Modifier.align(Alignment.CenterEnd),
                         listState = listState
@@ -102,6 +130,17 @@ fun EventListView(
             }
         }
     }
+}
+
+@Composable
+private fun SectionHeader(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelMedium,
+        color = Accent,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(vertical = 4.dp)
+    )
 }
 
 @Composable

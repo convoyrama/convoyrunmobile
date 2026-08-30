@@ -1,4 +1,4 @@
-package com.convoyrun.mobile.ui.theme
+package com.convoyrama.convoyrun.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

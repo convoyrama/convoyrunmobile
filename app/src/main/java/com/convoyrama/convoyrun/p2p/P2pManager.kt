@@ -1,8 +1,8 @@
-package com.convoyrun.mobile.p2p
+package com.convoyrama.convoyrun.p2p
 
 import android.content.Context
-import com.convoyrun.mobile.data.PreferencesManager
-import com.convoyrun.mobile.model.*
+import com.convoyrama.convoyrun.data.PreferencesManager
+import com.convoyrama.convoyrun.model.*
 import uniffi.convoyrun_mobile_ffi.P2pNodeWrapper
 import uniffi.convoyrun_mobile_ffi.GossipSubscriptionWrapper
 import uniffi.convoyrun_mobile_ffi.verifyConvoySignature
@@ -144,6 +144,20 @@ class P2pManager(
                     if (_status.value != newStatus) {
                         android.util.Log.i("P2pManager", "Status changed: ${_status.value} -> $newStatus (peers: $peerCount)")
                         _status.value = newStatus
+
+                        // Re-broadcast all known events when coming online
+                        if (newStatus == Status.ONLINE) {
+                            val currentEvents = _events.value
+                            android.util.Log.i("P2pManager", "Re-broadcasting ${currentEvents.size} events...")
+                            for (event in currentEvents) {
+                                try {
+                                    val json = Json.encodeToString(ConvoyEvent.serializer(), event)
+                                    sub.broadcast(json)
+                                } catch (e: Exception) {
+                                    android.util.Log.e("P2pManager", "Re-broadcast failed for event ${event.id}: ${e.message}")
+                                }
+                            }
+                        }
                     }
 
                     if (event == null) {
@@ -262,6 +276,22 @@ class P2pManager(
         return filteredEvents().filter { event ->
             event.schedule.meetingTimestamp in dayStart until dayEnd
         }
+    }
+
+    /**
+     * Get upcoming events from today for the next N days (excluding today)
+     */
+    fun getUpcomingEvents(days: Int = 7): List<ConvoyEvent> {
+        val tz = kotlinx.datetime.TimeZone.currentSystemDefault()
+        val today = kotlinx.datetime.Clock.System.todayIn(tz)
+        val tomorrow = today.plus(1, kotlinx.datetime.DateTimeUnit.DAY)
+        val weekEnd = today.plus(days, kotlinx.datetime.DateTimeUnit.DAY)
+        val startTimestamp = tomorrow.atStartOfDayIn(tz).epochSeconds
+        val endTimestamp = weekEnd.atStartOfDayIn(tz).epochSeconds
+
+        return filteredEvents().filter { event ->
+            event.schedule.meetingTimestamp in startTimestamp until endTimestamp
+        }.sortedBy { it.schedule.meetingTimestamp }
     }
 
     fun getAllEvents(): List<ConvoyEvent> = filteredEvents()

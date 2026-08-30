@@ -1,4 +1,4 @@
-package com.convoyrun.mobile.ui.theme
+package com.convoyrama.convoyrun.ui.theme
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable

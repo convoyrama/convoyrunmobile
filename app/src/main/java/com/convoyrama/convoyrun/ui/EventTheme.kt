@@ -1,10 +1,10 @@
-package com.convoyrun.mobile.ui
+package com.convoyrama.convoyrun.ui
 
 import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.Color
-import com.convoyrun.mobile.R
-import com.convoyrun.mobile.model.*
-import com.convoyrun.mobile.ui.theme.*
+import com.convoyrama.convoyrun.R
+import com.convoyrama.convoyrun.model.*
+import com.convoyrama.convoyrun.ui.theme.*
 
 @StringRes
 fun getEventTypeNameRes(type: EventType): Int {

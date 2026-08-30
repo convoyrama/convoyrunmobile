@@ -1,4 +1,4 @@
-package com.convoyrun.mobile.ui
+package com.convoyrama.convoyrun.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,8 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.convoyrun.mobile.model.ConvoyEvent
-import com.convoyrun.mobile.ui.theme.*
+import com.convoyrama.convoyrun.model.ConvoyEvent
+import com.convoyrama.convoyrun.ui.theme.*
 import kotlinx.datetime.*
 
 @Composable

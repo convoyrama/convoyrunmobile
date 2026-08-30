@@ -17,6 +17,9 @@
     <string name="filter_all">All</string>
     <string name="search_events">Search events…</string>
     <string name="no_events">No events for this day</string>
+    <string name="no_upcoming_events">No upcoming events</string>
+    <string name="section_today">Today</string>
+    <string name="section_upcoming">Upcoming</string>
 
     <!-- Event Details -->
     <string name="event_details">Event Details</string>
