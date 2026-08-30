@@ -5,8 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -52,22 +50,14 @@ class MainActivity : ComponentActivity() {
         }
 
         // Start P2P once on create — survives background/foreground transitions
-        p2pManager?.let { mgr ->
-            lifecycleScope.launch {
-                mgr.start()
-            }
-        }
+        p2pManager?.start()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         // Stop P2P and cleanup only when Activity is truly destroyed
-        p2pManager?.let { mgr ->
-            lifecycleScope.launch {
-                mgr.stop()
-                mgr.destroy()
-            }
-        }
+        p2pManager?.stop()
+        p2pManager?.destroy()
     }
 
     private fun applyLocaleOverride(prefs: PreferencesManager) {
@@ -121,23 +111,10 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(id = R.mipmap.ic_launcher),
-                            contentDescription = null,
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.app_title),
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = Accent
-                        )
-                    }
-                    Text(
-                        text = stringResource(R.string.app_subtitle),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary
+                    Image(
+                        painter = painterResource(id = R.drawable.logo_text),
+                        contentDescription = stringResource(R.string.app_title),
+                        modifier = Modifier.height(40.dp)
                     )
                 }
 

@@ -58,10 +58,17 @@ fun EventListView(
             onValueChange = { searchQuery = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            placeholder = { Text(stringResource(R.string.search_events)) },
+                .heightIn(min = 40.dp)
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+            placeholder = { 
+                Text(
+                    text = stringResource(R.string.search_events),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            },
             singleLine = true,
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(8.dp),
+            textStyle = MaterialTheme.typography.bodySmall,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Accent,
                 unfocusedBorderColor = Divider
@@ -73,31 +80,43 @@ fun EventListView(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(horizontal = 12.dp, vertical = 2.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             FilterChip(
                 selected = selectedFilter == null,
                 onClick = { selectedFilter = null },
-                label = { Text(stringResource(R.string.filter_all)) },
+                label = { 
+                    Text(
+                        text = stringResource(R.string.filter_all),
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                },
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = Accent.copy(alpha = 0.2f)
-                )
+                ),
+                modifier = Modifier.height(28.dp)
             )
 
             EventType.entries.forEach { type ->
                 FilterChip(
                     selected = selectedFilter == type,
                     onClick = { selectedFilter = type },
-                    label = { Text(stringResource(getEventTypeNameRes(type))) },
+                    label = { 
+                        Text(
+                            text = stringResource(getEventTypeNameRes(type)),
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = getEventTypeColor(type).copy(alpha = 0.2f)
-                    )
+                    ),
+                    modifier = Modifier.height(28.dp)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Event list
         if (filteredEvents.isEmpty()) {

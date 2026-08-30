@@ -60,7 +60,7 @@ class P2pManager(
     /**
      * Initialize and start the P2P node
      */
-    suspend fun start() {
+    fun start() {
         if (node != null || starting) return
         starting = true
 
@@ -74,7 +74,7 @@ class P2pManager(
             // Initialize Android context (for DNS resolver)
             ConvoyRunP2p.installAndroidContext(context.applicationContext)
 
-            // Create P2P node (factory function via UniFFI)
+            // Create P2P node (sync function)
             android.util.Log.i("P2pManager", "Creating P2P node...")
             val nodeWrapper = createP2pNode(dataDir.absolutePath)
             node = nodeWrapper
@@ -255,16 +255,15 @@ class P2pManager(
     /**
      * Stop the P2P node
      */
-    suspend fun stop() {
+    fun stop() {
         starting = false
         receiverJob?.cancel()
-        receiverJob?.join()
         receiverJob = null
 
         try {
             node?.shutdown()
         } catch (e: Exception) {
-            println("[P2P] Error closing node: ${e.message}")
+            android.util.Log.e("P2pManager", "Error closing node: ${e.message}", e)
         }
         node = null
         subscription = null

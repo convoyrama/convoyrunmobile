@@ -9,8 +9,18 @@ mod gossip;
 mod p2p;
 
 use std::sync::Arc;
+use std::sync::OnceLock;
 
 uniffi::setup_scaffolding!();
+
+// Global Tokio runtime for async operations
+static TOKIO_RUNTIME: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
+
+fn get_runtime() -> &'static tokio::runtime::Runtime {
+    TOKIO_RUNTIME.get_or_init(|| {
+        tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime")
+    })
+}
 
 /// Initialize the Android context (fallback for non-Android builds)
 #[cfg(not(target_os = "android"))]
@@ -24,14 +34,16 @@ pub struct P2pNodeWrapper {
     inner: p2p::P2pNode,
 }
 
-/// Create a new P2P node (factory function — async constructor)
+/// Create a new P2P node (sync wrapper for async init)
 #[uniffi::export]
-pub async fn create_p2p_node(data_dir: String) -> Result<Arc<P2pNodeWrapper>, P2pError> {
-    let path = std::path::Path::new(&data_dir);
-    let node = p2p::P2pNode::init(path)
-        .await
-        .map_err(|e| P2pError::InitError(e.to_string()))?;
-    Ok(Arc::new(P2pNodeWrapper { inner: node }))
+pub fn create_p2p_node(data_dir: String) -> Result<Arc<P2pNodeWrapper>, P2pError> {
+    get_runtime().block_on(async {
+        let path = std::path::Path::new(&data_dir);
+        let node = p2p::P2pNode::init(path)
+            .await
+            .map_err(|e| P2pError::InitError(e.to_string()))?;
+        Ok(Arc::new(P2pNodeWrapper { inner: node }))
+    })
 }
 
 #[uniffi::export]
@@ -52,29 +64,33 @@ impl P2pNodeWrapper {
     }
 
     /// Join the convoy gossip topic
-    pub async fn join_topic(self: Arc<Self>) -> Result<Arc<GossipSubscriptionWrapper>, P2pError> {
-        let (sender, receiver) = self
-            .inner
-            .join_topic()
-            .await
-            .map_err(|e| P2pError::JoinError(e.to_string()))?;
+    pub fn join_topic(self: Arc<Self>) -> Result<Arc<GossipSubscriptionWrapper>, P2pError> {
+        get_runtime().block_on(async {
+            let (sender, receiver) = self
+                .inner
+                .join_topic()
+                .await
+                .map_err(|e| P2pError::JoinError(e.to_string()))?;
 
-        let subscription = GossipSubscriptionWrapper::new(
-            receiver,
-            sender,
-            self.inner.neighbor_count.clone(),
-            self.inner.is_online.clone(),
-        );
+            let subscription = GossipSubscriptionWrapper::new(
+                receiver,
+                sender,
+                self.inner.neighbor_count.clone(),
+                self.inner.is_online.clone(),
+            );
 
-        Ok(Arc::new(subscription))
+            Ok(Arc::new(subscription))
+        })
     }
 
     /// Graceful shutdown
-    pub async fn shutdown(&self) -> Result<(), P2pError> {
-        self.inner
-            .close()
-            .await
-            .map_err(|e| P2pError::ShutdownError(e.to_string()))
+    pub fn shutdown(&self) -> Result<(), P2pError> {
+        get_runtime().block_on(async {
+            self.inner
+                .close()
+                .await
+                .map_err(|e| P2pError::ShutdownError(e.to_string()))
+        })
     }
 }
 
@@ -102,11 +118,13 @@ impl GossipSubscriptionWrapper {
 #[uniffi::export]
 impl GossipSubscriptionWrapper {
     /// Wait for the next gossip event
-    pub async fn next_event(&self) -> Option<Arc<GossipEventWrapper>> {
-        self.inner
-            .next_event()
-            .await
-            .map(|e| Arc::new(GossipEventWrapper { inner: e }))
+    pub fn next_event(&self) -> Option<Arc<GossipEventWrapper>> {
+        get_runtime().block_on(async {
+            self.inner
+                .next_event()
+                .await
+                .map(|e| Arc::new(GossipEventWrapper { inner: e }))
+        })
     }
 
     /// Get the number of connected peers
