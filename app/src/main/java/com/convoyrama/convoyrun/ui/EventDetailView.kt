@@ -3,6 +3,9 @@ package com.convoyrama.convoyrun.ui
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,10 +18,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.convoyrama.convoyrun.R
 import com.convoyrama.convoyrun.model.*
@@ -50,6 +59,7 @@ fun EventDetailView(
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    var showFullImage by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -235,20 +245,34 @@ fun EventDetailView(
             // Flyer image
             if (event.flyer?.url?.isNotEmpty() == true) {
                 Spacer(modifier = Modifier.height(16.dp))
-                AsyncImage(
-                    model = event.flyer.url,
-                    contentDescription = stringResource(R.string.detail_flyer),
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(16f / 9f)
                         .padding(horizontal = 16.dp)
-                        .clip(RoundedCornerShape(12.dp)),
-                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                )
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { showFullImage = true }
+                ) {
+                    AsyncImage(
+                        model = event.flyer.url,
+                        contentDescription = stringResource(R.string.detail_flyer),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(16f / 9f),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
         }
+    }
+
+    // Full-screen image viewer
+    if (showFullImage && event.flyer?.url?.isNotEmpty() == true) {
+        FullScreenImageViewer(
+            imageUrl = event.flyer.url,
+            onDismiss = { showFullImage = false }
+        )
     }
 }
 
@@ -358,6 +382,64 @@ private fun buildRouteText(route: Route): String {
             append(route.destCity)
             if (route.destLocation.isNotEmpty()) {
                 append(" (${route.destLocation})")
+            }
+        }
+    }
+}
+
+/**
+ * Full-screen image viewer with pinch-to-zoom and pan.
+ */
+@Composable
+fun FullScreenImageViewer(
+    imageUrl: String,
+    onDismiss: () -> Unit
+) {
+    var scale by remember { mutableFloatStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+
+    val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
+        scale = (scale * zoomChange).coerceIn(0.5f, 5f)
+        offset += panChange
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.95f))
+                .transformable(state = transformableState),
+            contentAlignment = Alignment.Center
+        ) {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        translationX = offset.x
+                        translationY = offset.y
+                    },
+                contentScale = ContentScale.Fit
+            )
+
+            // Close button
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = stringResource(R.string.close),
+                    tint = Color.White
+                )
             }
         }
     }
