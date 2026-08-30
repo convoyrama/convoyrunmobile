@@ -64,9 +64,9 @@ fun EventListView(
             onValueChange = { searchQuery = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 40.dp)
+                .heightIn(min = 32.dp)
                 .padding(horizontal = 12.dp, vertical = 4.dp),
-            placeholder = { 
+            placeholder = {
                 Text(
                     text = stringResource(R.string.search_events),
                     style = MaterialTheme.typography.bodySmall
@@ -188,7 +188,7 @@ private fun EventCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(12.dp)
         ) {
             // Event type badge + name
             Row(

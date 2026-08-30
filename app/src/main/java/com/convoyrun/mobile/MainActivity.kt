@@ -106,7 +106,7 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
                     .fillMaxWidth()
                     .background(BgSecondary)
                     .windowInsetsPadding(WindowInsets.statusBars)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -114,11 +114,17 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
                     Image(
                         painter = painterResource(id = R.drawable.logo_text),
                         contentDescription = stringResource(R.string.app_title),
-                        modifier = Modifier.height(40.dp)
+                        modifier = Modifier.height(24.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.app_subtitle),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary,
+                        modifier = Modifier.padding(top = 1.dp)
                     )
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     StatusIndicator(
                         status = status?.value ?: P2pManager.Status.OFFLINE,
                         peerCount = peerCount?.value ?: 0
@@ -151,7 +157,7 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
                 selectedDay = selectedDay,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.4f)
+                    .weight(0.35f)
             )
 
             HorizontalDivider(color = Divider, thickness = 1.dp)
@@ -161,7 +167,7 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
                 onEventClicked = { selectedEvent = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.6f)
+                    .weight(0.65f)
             )
         }
     }

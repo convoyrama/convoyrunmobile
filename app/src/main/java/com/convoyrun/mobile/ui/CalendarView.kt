@@ -53,7 +53,7 @@ fun CalendarView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = 12.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -65,12 +65,12 @@ fun CalendarView(
                     currentMonth = Month.entries[currentMonth.ordinal - 1]
                 }
             }) {
-                Text("‹", color = TextSecondary, fontSize = MaterialTheme.typography.headlineMedium.fontSize)
+                Text("‹", color = TextSecondary, fontSize = MaterialTheme.typography.titleMedium.fontSize)
             }
 
             Text(
                 text = "${java.time.Month.valueOf(currentMonth.name).getDisplayName(TextStyle.FULL, Locale.getDefault())} $currentYear",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.titleMedium,
                 color = TextPrimary
             )
 
@@ -82,7 +82,7 @@ fun CalendarView(
                     currentMonth = Month.entries[currentMonth.ordinal + 1]
                 }
             }) {
-                Text("›", color = TextSecondary, fontSize = MaterialTheme.typography.headlineMedium.fontSize)
+                Text("›", color = TextSecondary, fontSize = MaterialTheme.typography.titleMedium.fontSize)
             }
         }
 
@@ -116,7 +116,8 @@ private fun MonthView(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         // Day of week headers
         Row(
@@ -134,7 +135,7 @@ private fun MonthView(
             ).forEach { day ->
                 Text(
                     text = day,
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelSmall,
                     color = TextMuted,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f)
@@ -142,7 +143,7 @@ private fun MonthView(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Calendar grid
         val totalCells = 42 // 6 weeks
@@ -219,7 +220,7 @@ private fun DayCell(
         ) {
             Text(
                 text = day.toString(),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = textColor
             )
 
@@ -227,7 +228,7 @@ private fun DayCell(
             if (hasEvents && !isSelected) {
                 Box(
                     modifier = Modifier
-                        .size(6.dp)
+                        .size(4.dp)
                         .clip(CircleShape)
                         .background(Accent)
                 )
