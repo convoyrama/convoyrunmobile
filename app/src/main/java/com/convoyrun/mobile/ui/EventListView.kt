@@ -3,13 +3,11 @@ package com.convoyrun.mobile.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,105 +27,37 @@ import com.convoyrun.mobile.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
 
-private val ALL_LANGUAGES = listOf(
-    "es" to "ES", "en" to "EN", "pt" to "PT", "fr" to "FR", "de" to "DE",
-    "it" to "IT", "nl" to "NL", "pl" to "PL", "ru" to "RU", "tr" to "TR",
-    "cs" to "CS", "ro" to "RO", "sv" to "SV", "da" to "DA", "fi" to "FI",
-    "no" to "NO", "hu" to "HU", "bg" to "BG", "ko" to "KO", "zh" to "ZH",
-    "ja" to "JA"
-)
-
 @Composable
 fun EventListView(
     events: List<ConvoyEvent>,
     onEventClicked: (ConvoyEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedType by remember { mutableStateOf<EventType?>(null) }
-    var selectedLang by remember { mutableStateOf<String?>(null) }
     var searchQuery by remember { mutableStateOf("") }
 
-    val filteredEvents = remember(events, selectedType, selectedLang, searchQuery) {
+    val filteredEvents = remember(events, searchQuery) {
         events.filter { event ->
-            val matchesType = selectedType == null || event.event.eventType == selectedType
-            val matchesLang = selectedLang == null || event.event.languages.contains(selectedLang)
-            val matchesSearch = searchQuery.isEmpty() ||
+            searchQuery.isEmpty() ||
                     event.event.name.contains(searchQuery, ignoreCase = true) ||
-                    event.event.server.contains(searchQuery, ignoreCase = true)
-            matchesType && matchesLang && matchesSearch
+                    event.event.server.contains(searchQuery, ignoreCase = true) ||
+                    event.nickname.contains(searchQuery, ignoreCase = true)
         }.sortedBy { it.schedule.meetingTimestamp }
     }
 
     Column(modifier = modifier) {
-        // Event type filter chips
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 12.dp, vertical = 3.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            FilterChip(
-                selected = selectedType == null,
-                onClick = { selectedType = null },
-                label = {
-                    Text(stringResource(R.string.filter_all), style = MaterialTheme.typography.labelSmall, fontSize = 10.sp)
-                },
-                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Accent.copy(alpha = 0.2f)),
-                modifier = Modifier.height(26.dp)
-            )
-            EventType.entries.forEach { type ->
-                FilterChip(
-                    selected = selectedType == type,
-                    onClick = { selectedType = type },
-                    label = {
-                        Text(stringResource(getEventTypeNameRes(type)), style = MaterialTheme.typography.labelSmall, fontSize = 10.sp)
-                    },
-                    colors = FilterChipDefaults.filterChipColors(selectedContainerColor = getEventTypeColor(type).copy(alpha = 0.2f)),
-                    modifier = Modifier.height(26.dp)
-                )
-            }
-        }
-
-        // Language filter chips
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 12.dp, vertical = 2.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            FilterChip(
-                selected = selectedLang == null,
-                onClick = { selectedLang = null },
-                label = { Text("All langs", fontSize = 9.sp) },
-                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Accent.copy(alpha = 0.2f)),
-                modifier = Modifier.height(24.dp)
-            )
-            ALL_LANGUAGES.forEach { (code, label) ->
-                val count = events.count { it.event.languages.contains(code) }
-                if (count > 0) {
-                    FilterChip(
-                        selected = selectedLang == code,
-                        onClick = { selectedLang = if (selectedLang == code) null else code },
-                        label = { Text("$label ($count)", fontSize = 9.sp) },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Accent.copy(alpha = 0.2f)),
-                        modifier = Modifier.height(24.dp)
-                    )
-                }
-            }
-        }
-
         // Search bar
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 34.dp)
-                .padding(horizontal = 12.dp, vertical = 2.dp),
+                .heightIn(min = 36.dp)
+                .padding(horizontal = 12.dp, vertical = 4.dp),
             placeholder = {
-                Text(stringResource(R.string.search_events), style = MaterialTheme.typography.bodySmall, fontSize = 12.sp)
+                Text(
+                    text = stringResource(R.string.search_events),
+                    style = MaterialTheme.typography.bodySmall
+                )
             },
             singleLine = true,
             shape = RoundedCornerShape(8.dp),
@@ -137,8 +67,6 @@ fun EventListView(
                 unfocusedBorderColor = Divider
             )
         )
-
-        Spacer(modifier = Modifier.height(2.dp))
 
         // Event list
         if (filteredEvents.isEmpty()) {
@@ -166,7 +94,10 @@ fun EventListView(
                     }
                 }
                 if (filteredEvents.size > 3) {
-                    ScrollbarIndicator(modifier = Modifier.align(Alignment.CenterEnd), listState = listState)
+                    ScrollbarIndicator(
+                        modifier = Modifier.align(Alignment.CenterEnd),
+                        listState = listState
+                    )
                 }
             }
         }
@@ -183,6 +114,7 @@ private fun EventCard(event: ConvoyEvent, onClick: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = BgCard)
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(10.dp)) {
+            // Name + type badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -213,8 +145,12 @@ private fun EventCard(event: ConvoyEvent, onClick: () -> Unit) {
 
             Spacer(modifier = Modifier.height(6.dp))
 
+            // Game + mode
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Surface(shape = RoundedCornerShape(4.dp), color = getGameColor(event.event.game).copy(alpha = 0.2f)) {
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = getGameColor(event.event.game).copy(alpha = 0.2f)
+                ) {
                     Text(
                         text = event.event.game.name,
                         style = MaterialTheme.typography.labelSmall,
@@ -233,7 +169,11 @@ private fun EventCard(event: ConvoyEvent, onClick: () -> Unit) {
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            // Time + server
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Text(
                     text = formatMeetingTime(event.schedule.meetingTimestamp),
                     style = MaterialTheme.typography.bodySmall,
@@ -252,6 +192,7 @@ private fun EventCard(event: ConvoyEvent, onClick: () -> Unit) {
                 }
             }
 
+            // Route
             if (event.event.route.startCity.isNotEmpty() || event.event.route.destCity.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 val routeText = buildString {
@@ -271,6 +212,7 @@ private fun EventCard(event: ConvoyEvent, onClick: () -> Unit) {
                 )
             }
 
+            // Nickname
             if (event.nickname.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
@@ -297,12 +239,26 @@ private fun ScrollbarIndicator(modifier: Modifier = Modifier, listState: LazyLis
     val totalItems = listState.layoutInfo.totalItemsCount
     if (totalItems > 0) {
         val scrollPercentage = firstVisibleItemIndex.toFloat() / (totalItems - 1).coerceAtLeast(1)
-        Canvas(modifier = modifier.width(4.dp).fillMaxHeight().padding(vertical = 8.dp)) {
+        Canvas(
+            modifier = modifier
+                .width(4.dp)
+                .fillMaxHeight()
+                .padding(vertical = 8.dp)
+        ) {
             val trackHeight = size.height
             val thumbHeight = (trackHeight * 0.2f).coerceAtLeast(20.dp.toPx())
             val thumbY = scrollPercentage * (trackHeight - thumbHeight)
-            drawRoundRect(color = Divider.copy(alpha = 0.3f), size = size.copy(width = 4.dp.toPx()), cornerRadius = CornerRadius(2.dp.toPx()))
-            drawRoundRect(color = Accent.copy(alpha = 0.6f), size = Size(4.dp.toPx(), thumbHeight), topLeft = Offset(0f, thumbY), cornerRadius = CornerRadius(2.dp.toPx()))
+            drawRoundRect(
+                color = Divider.copy(alpha = 0.3f),
+                size = size.copy(width = 4.dp.toPx()),
+                cornerRadius = CornerRadius(2.dp.toPx())
+            )
+            drawRoundRect(
+                color = Accent.copy(alpha = 0.6f),
+                size = Size(4.dp.toPx(), thumbHeight),
+                topLeft = Offset(0f, thumbY),
+                cornerRadius = CornerRadius(2.dp.toPx())
+            )
         }
     }
 }

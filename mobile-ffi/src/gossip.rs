@@ -69,13 +69,16 @@ impl GossipSubscription {
     /// Loops internally over control events (NeighborUp/Down).
     /// Returns None ONLY when the receiver channel is truly closed.
     pub async fn next_event(&self) -> Option<GossipEvent> {
+        eprintln!("[Gossip] next_event: acquiring lock...");
         let mut receiver = self.receiver.lock().await;
+        eprintln!("[Gossip] next_event: lock acquired, waiting for event...");
 
         loop {
             match receiver.next().await {
                 Ok(event) => {
                     match event {
                         iroh_gossip::api::Event::Received(message) => {
+                            eprintln!("[Gossip] Received message: {} bytes from {}", message.content.len(), message.delivered_from);
                             if message.content.len() > 256 * 1024 {
                                 eprintln!("[Gossip] Dropping oversized message ({} bytes)", message.content.len());
                                 continue;

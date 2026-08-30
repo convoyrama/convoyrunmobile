@@ -15,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -25,7 +24,6 @@ import com.convoyrun.mobile.data.PreferencesManager
 import com.convoyrun.mobile.p2p.P2pManager
 import com.convoyrun.mobile.ui.theme.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     prefsManager: PreferencesManager,
@@ -39,11 +37,15 @@ fun SettingsScreen(
     var currentLang by remember { mutableStateOf(prefsManager.getAppLanguage()) }
     var selectedLangs by remember { mutableStateOf(filteredLanguages) }
 
-    val supportedLanguages = listOf(
+    // UI languages: only 3 (es, en, pt)
+    val uiLanguages = listOf("es", "en", "pt")
+
+    // Event language filter: all 21 from desktop
+    val eventLanguages = listOf(
         "es", "en", "pt", "fr", "de", "it", "nl", "pl", "ru", "tr",
         "cs", "ro", "sv", "da", "fi", "no", "hu", "bg", "ko", "zh", "ja"
     )
-    val languageNames = mapOf(
+    val eventLanguageNames = mapOf(
         "es" to "Español", "en" to "English", "pt" to "Português",
         "fr" to "Français", "de" to "Deutsch", "it" to "Italiano",
         "nl" to "Nederlands", "pl" to "Polski", "ru" to "Русский",
@@ -54,93 +56,81 @@ fun SettingsScreen(
     )
 
     val langCounts = remember(allEvents) {
-        supportedLanguages.associateWith { lang ->
+        eventLanguages.associateWith { lang ->
             allEvents.count { it.event.languages.contains(lang) }
         }
     }
 
-    Scaffold(
-        contentWindowInsets = WindowInsets.statusBars,
-        topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(BgSecondary)
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        Icons.Default.ArrowBack,
-                        contentDescription = stringResource(R.string.settings_back),
-                        tint = TextSecondary
-                    )
-                }
-                Text(
-                    text = stringResource(R.string.settings_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = TextPrimary,
-                    fontWeight = FontWeight.Bold
+    Column(modifier = Modifier.fillMaxSize().background(BgPrimary)) {
+        // TopBar with status bar padding
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(BgSecondary)
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(horizontal = 8.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.Default.ArrowBack,
+                    contentDescription = stringResource(R.string.settings_back),
+                    tint = TextSecondary
                 )
             }
+            Text(
+                text = stringResource(R.string.settings_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = TextPrimary,
+                fontWeight = FontWeight.Bold
+            )
         }
-    ) { padding ->
+
+        // Content
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BgPrimary)
-                .padding(padding)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item { Spacer(Modifier.height(8.dp)) }
 
-            // --- App Language ---
+            // --- App Language (UI: only 3 languages) ---
             item {
                 GroupLabel(stringResource(R.string.settings_lang_group))
             }
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = BgCard)) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.settings_lang_label),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = TextPrimary,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = stringResource(R.string.settings_lang_sub),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextMuted
-                            )
-                        }
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Text(
+                            text = stringResource(R.string.settings_lang_label),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = stringResource(R.string.settings_lang_sub),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextMuted
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            // System default option
                             LangChip(
                                 label = "Auto",
                                 selected = currentLang == null,
                                 onClick = {
                                     currentLang = null
                                     prefsManager.setAppLanguage(null)
-                                    // Apply system default
                                     AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList())
                                 }
                             )
-                            for (lang in supportedLanguages) {
+                            for (lang in uiLanguages) {
                                 LangChip(
                                     label = lang.uppercase(),
                                     selected = currentLang == lang,
                                     onClick = {
                                         currentLang = lang
                                         prefsManager.setAppLanguage(lang)
-                                        // Apply language change immediately
                                         val locales = LocaleListCompat.forLanguageTags(lang)
                                         AppCompatDelegate.setApplicationLocales(locales)
                                     }
@@ -151,14 +141,14 @@ fun SettingsScreen(
                 }
             }
 
-            // --- Language Filter ---
+            // --- Event Language Filter (all 21) ---
             item {
                 GroupLabel(stringResource(R.string.settings_filter_group))
             }
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = BgCard)) {
                     Column {
-                        for (lang in supportedLanguages) {
+                        for (lang in eventLanguages) {
                             val count = langCounts[lang] ?: 0
                             val isChecked = selectedLangs.isEmpty() || selectedLangs.contains(lang)
                             Row(
@@ -166,7 +156,7 @@ fun SettingsScreen(
                                     .fillMaxWidth()
                                     .clickable {
                                         val newSet = if (selectedLangs.isEmpty()) {
-                                            supportedLanguages.filter { it != lang }.toSet()
+                                            eventLanguages.filter { it != lang }.toSet()
                                         } else if (selectedLangs.contains(lang)) {
                                             selectedLangs - lang
                                         } else {
@@ -190,16 +180,18 @@ fun SettingsScreen(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Text(
-                                    text = languageNames[lang] ?: lang,
+                                    text = eventLanguageNames[lang] ?: lang,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = TextPrimary,
                                     modifier = Modifier.weight(1f)
                                 )
-                                Text(
-                                    text = "$count events",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextMuted
-                                )
+                                if (count > 0) {
+                                    Text(
+                                        text = "$count",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextMuted
+                                    )
+                                }
                             }
                         }
                     }

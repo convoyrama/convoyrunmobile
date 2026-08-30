@@ -130,9 +130,11 @@ class P2pManager(
             }
 
             // Main loop: blocking read of next event (runs on IO dispatcher)
+            android.util.Log.i("P2pManager", "Entering main event loop...")
             while (isActive) {
                 try {
                     // This is a BLOCKING call (FFI block_on) - must run on IO
+                    android.util.Log.d("P2pManager", "Waiting for nextEvent()...")
                     val event = sub.nextEvent()
 
                     // Update peer count after each event
@@ -151,20 +153,30 @@ class P2pManager(
 
                     loopCount++
                     android.util.Log.i("P2pManager", "Event #$loopCount from ${event.sender()}, content length=${event.content().length}")
+                    android.util.Log.d("P2pManager", "Event content preview: ${event.content().take(200)}")
 
                     // Parse the gossip message
-                    val message = parseGossipMessage(event.content()) ?: continue
+                    val message = parseGossipMessage(event.content())
+                    if (message == null) {
+                        android.util.Log.w("P2pManager", "Failed to parse gossip message")
+                        continue
+                    }
+                    android.util.Log.d("P2pManager", "Parsed message type: ${message::class.simpleName}")
 
                     when (message) {
                         is GossipMessage.Convoy -> {
+                            android.util.Log.d("P2pManager", "Verifying signature for convoy...")
                             if (!verifyConvoySignature(message.data)) {
-                                android.util.Log.w("P2pManager", "Dropping event with invalid signature")
+                                android.util.Log.w("P2pManager", "Dropping event with invalid signature. Data preview: ${message.data.take(200)}")
                                 continue
                             }
+                            android.util.Log.d("P2pManager", "Signature OK, parsing convoy event...")
                             val convoyEvent = parseConvoyEvent(message.data)
                             if (convoyEvent != null) {
-                                android.util.Log.i("P2pManager", "Adding convoy event: ${convoyEvent.event.name}")
+                                android.util.Log.i("P2pManager", "Adding convoy event: '${convoyEvent.event.name}' (id=${convoyEvent.id}, peer=${convoyEvent.peerId.take(8)})")
                                 addEvent(convoyEvent)
+                            } else {
+                                android.util.Log.e("P2pManager", "Failed to parse ConvoyEvent from data")
                             }
                         }
                         is GossipMessage.DeleteConvoy -> {
@@ -175,7 +187,9 @@ class P2pManager(
                             android.util.Log.i("P2pManager", "Received blacklist")
                             applyBlacklist(message.data)
                         }
-                        else -> { /* Read-only: ignore vote, channel, trustlist */ }
+                        else -> {
+                            android.util.Log.d("P2pManager", "Ignoring message type: ${message::class.simpleName}")
+                        }
                     }
                 } catch (e: CancellationException) {
                     throw e
