@@ -83,6 +83,7 @@ impl GossipSubscription {
                             let sender = message.delivered_from.to_string();
                             let content = String::from_utf8_lossy(&message.content).to_string();
                             let timestamp = chrono::Utc::now().timestamp();
+                            eprintln!("[Gossip] Received message from {} ({} bytes)", sender, content.len());
 
                             return Some(GossipEvent {
                                 sender,
@@ -90,23 +91,29 @@ impl GossipSubscription {
                                 timestamp,
                             });
                         }
-                        iroh_gossip::api::Event::NeighborUp(_) => {
-                            self.neighbor_count.fetch_add(1, Ordering::Relaxed);
+                        iroh_gossip::api::Event::NeighborUp(peer) => {
+                            let count = self.neighbor_count.fetch_add(1, Ordering::Relaxed) + 1;
                             self.is_online.store(true, Ordering::Relaxed);
+                            eprintln!("[Gossip] NeighborUp: {} (total: {})", peer, count);
                             continue;
                         }
-                        iroh_gossip::api::Event::NeighborDown(_) => {
+                        iroh_gossip::api::Event::NeighborDown(peer) => {
                             self.neighbor_count.fetch_update(
                                 Ordering::Relaxed,
                                 Ordering::Relaxed,
                                 |prev| if prev > 0 { Some(prev - 1) } else { None },
                             ).ok();
-                            if self.neighbor_count.load(Ordering::Relaxed) == 0 {
+                            let count = self.neighbor_count.load(Ordering::Relaxed);
+                            if count == 0 {
                                 self.is_online.store(false, Ordering::Relaxed);
                             }
+                            eprintln!("[Gossip] NeighborDown: {} (total: {})", peer, count);
                             continue;
                         }
-                        _ => continue,
+                        other => {
+                            eprintln!("[Gossip] Other event: {:?}", std::mem::discriminant(&other));
+                            continue;
+                        }
                     }
                 }
                 Err(e) => {

@@ -22,7 +22,7 @@ iroh = "1.0"
 iroh-gossip = "0.101"
 
 # DHT peer discovery (Mainline DHT, same as desktop)
-distributed-topic-tracker = "0.3.5"
+distributed-topic-tracker = { version = "0.3.5", features = ["iroh-gossip"] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }

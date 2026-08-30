@@ -9,6 +9,7 @@ import uniffi.convoyrun_mobile_ffi.verifyConvoySignature
 import uniffi.convoyrun_mobile_ffi.createP2pNode
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
+
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -70,6 +71,7 @@ class P2pManager(
             // Get data directory
             val dataDir = File(context.filesDir, "p2p")
             dataDir.mkdirs()
+            android.util.Log.i("P2pManager", "Data dir: ${dataDir.absolutePath}")
 
             // Initialize Android context (for DNS resolver)
             ConvoyRunP2p.installAndroidContext(context.applicationContext)
@@ -107,31 +109,48 @@ class P2pManager(
         receiverJob = scope.launch {
             val sub = subscription ?: return@launch
             android.util.Log.i("P2pManager", "Event receiver loop started")
+            var loopCount = 0
 
+            // Separate coroutine for periodic peer count updates
+            launch {
+                while (isActive) {
+                    delay(5000)
+                    try {
+                        val pc = sub.peerCount().toInt()
+                        _peerCount.value = pc
+                        val newStatus = if (pc > 0) Status.ONLINE else Status.SEARCHING
+                        if (_status.value != newStatus) {
+                            android.util.Log.i("P2pManager", "Status changed: ${_status.value} -> $newStatus (peers: $pc)")
+                            _status.value = newStatus
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("P2pManager", "Error updating peer count: ${e.message}")
+                    }
+                }
+            }
+
+            // Main loop: blocking read of next event (runs on IO dispatcher)
             while (isActive) {
                 try {
-                    // Wait for next event with timeout to allow periodic peer count updates
-                    val event = withTimeoutOrNull(5000) { sub.nextEvent() }
+                    // This is a BLOCKING call (FFI block_on) - must run on IO
+                    val event = sub.nextEvent()
 
-                    // Always update peer count (even if no event received)
+                    // Update peer count after each event
                     val peerCount = sub.peerCount().toInt()
                     _peerCount.value = peerCount
-
-                    // Update status based on peer count
-                    val newStatus = if (peerCount > 0) {
-                        Status.ONLINE
-                    } else {
-                        Status.SEARCHING
-                    }
+                    val newStatus = if (peerCount > 0) Status.ONLINE else Status.SEARCHING
                     if (_status.value != newStatus) {
                         android.util.Log.i("P2pManager", "Status changed: ${_status.value} -> $newStatus (peers: $peerCount)")
                         _status.value = newStatus
                     }
 
-                    // If no event (timeout), continue loop
-                    if (event == null) continue
+                    if (event == null) {
+                        android.util.Log.w("P2pManager", "nextEvent returned null - channel closed")
+                        break
+                    }
 
-                    android.util.Log.i("P2pManager", "Received gossip event from ${event.sender()}")
+                    loopCount++
+                    android.util.Log.i("P2pManager", "Event #$loopCount from ${event.sender()}, content length=${event.content().length}")
 
                     // Parse the gossip message
                     val message = parseGossipMessage(event.content()) ?: continue

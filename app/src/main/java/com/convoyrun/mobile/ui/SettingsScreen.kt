@@ -39,8 +39,19 @@ fun SettingsScreen(
     var currentLang by remember { mutableStateOf(prefsManager.getAppLanguage()) }
     var selectedLangs by remember { mutableStateOf(filteredLanguages) }
 
-    val supportedLanguages = listOf("en", "es", "pt")
-    val languageNames = mapOf("en" to "English", "es" to "Español", "pt" to "Português")
+    val supportedLanguages = listOf(
+        "es", "en", "pt", "fr", "de", "it", "nl", "pl", "ru", "tr",
+        "cs", "ro", "sv", "da", "fi", "no", "hu", "bg", "ko", "zh", "ja"
+    )
+    val languageNames = mapOf(
+        "es" to "Español", "en" to "English", "pt" to "Português",
+        "fr" to "Français", "de" to "Deutsch", "it" to "Italiano",
+        "nl" to "Nederlands", "pl" to "Polski", "ru" to "Русский",
+        "tr" to "Türkçe", "cs" to "Čeština", "ro" to "Română",
+        "sv" to "Svenska", "da" to "Dansk", "fi" to "Suomi",
+        "no" to "Norsk", "hu" to "Magyar", "bg" to "Български",
+        "ko" to "한국어", "zh" to "中文", "ja" to "日本語"
+    )
 
     val langCounts = remember(allEvents) {
         supportedLanguages.associateWith { lang ->
@@ -49,6 +60,7 @@ fun SettingsScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets.statusBars,
         topBar = {
             Row(
                 modifier = Modifier
