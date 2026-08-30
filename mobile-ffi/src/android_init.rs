@@ -22,7 +22,7 @@ static INIT: Once = Once::new();
 /// This function stores it as a global reference that persists for the process lifetime.
 #[cfg(target_os = "android")]
 #[unsafe(no_mangle)]
-pub extern "system" fn Java_com_convoyrun_mobile_p2p_ConvoyRunP2p_installAndroidContext<'local>(
+pub extern "system" fn Java_com_convoyrama_convoyrun_p2p_ConvoyRunP2p_installAndroidContext<'local>(
     mut env: jni::EnvUnowned<'local>,
     _class: jni::objects::JClass<'local>,
     context: jni::objects::JObject<'local>,
