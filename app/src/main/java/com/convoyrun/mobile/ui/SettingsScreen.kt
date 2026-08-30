@@ -7,7 +7,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -141,56 +143,58 @@ fun SettingsScreen(
                 }
             }
 
-            // --- Event Language Filter (all 21) ---
+            // --- Event Language Filter (all 21, scrollable) ---
             item {
                 GroupLabel(stringResource(R.string.settings_filter_group))
             }
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = BgCard)) {
-                    Column {
-                        for (lang in eventLanguages) {
-                            val count = langCounts[lang] ?: 0
-                            val isChecked = selectedLangs.isEmpty() || selectedLangs.contains(lang)
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        val newSet = if (selectedLangs.isEmpty()) {
-                                            eventLanguages.filter { it != lang }.toSet()
-                                        } else if (selectedLangs.contains(lang)) {
-                                            selectedLangs - lang
-                                        } else {
-                                            selectedLangs + lang
+                    Box(modifier = Modifier.heightIn(max = 240.dp).verticalScroll(rememberScrollState())) {
+                        Column {
+                            for (lang in eventLanguages) {
+                                val count = langCounts[lang] ?: 0
+                                val isChecked = selectedLangs.isEmpty() || selectedLangs.contains(lang)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            val newSet = if (selectedLangs.isEmpty()) {
+                                                eventLanguages.filter { it != lang }.toSet()
+                                            } else if (selectedLangs.contains(lang)) {
+                                                selectedLangs - lang
+                                            } else {
+                                                selectedLangs + lang
+                                            }
+                                            selectedLangs = newSet
+                                            prefsManager.setFilteredLanguages(newSet)
                                         }
-                                        selectedLangs = newSet
-                                        prefsManager.setFilteredLanguages(newSet)
-                                    }
-                                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Checkbox(
-                                    checked = isChecked,
-                                    onCheckedChange = null,
-                                    colors = CheckboxDefaults.colors(
-                                        checkedColor = Accent,
-                                        uncheckedColor = Divider,
-                                        checkmarkColor = androidx.compose.ui.graphics.Color.White
-                                    ),
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Text(
-                                    text = eventLanguageNames[lang] ?: lang,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = TextPrimary,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                if (count > 0) {
-                                    Text(
-                                        text = "$count",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = TextMuted
+                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Checkbox(
+                                        checked = isChecked,
+                                        onCheckedChange = null,
+                                        colors = CheckboxDefaults.colors(
+                                            checkedColor = Accent,
+                                            uncheckedColor = Divider,
+                                            checkmarkColor = androidx.compose.ui.graphics.Color.White
+                                        ),
+                                        modifier = Modifier.size(18.dp)
                                     )
+                                    Text(
+                                        text = eventLanguageNames[lang] ?: lang,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextPrimary,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    if (count > 0) {
+                                        Text(
+                                            text = "$count",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = TextMuted
+                                        )
+                                    }
                                 }
                             }
                         }

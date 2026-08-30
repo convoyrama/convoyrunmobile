@@ -174,10 +174,19 @@ pub fn verify_convoy_signature(convoy_json: &str) -> bool {
 
     let canonical = canonical_json(&value);
 
-    // Decode peer_id (raw ed25519 public key, base64)
-    let peer_id_bytes = match base64::engine::general_purpose::STANDARD.decode(&peer_id_b64) {
-        Ok(b) if b.len() == 32 => b,
-        _ => return false,
+    // Decode peer_id — supports both hex (desktop format) and base64
+    let peer_id_bytes = if peer_id_b64.len() == 64 && peer_id_b64.chars().all(|c| c.is_ascii_hexdigit()) {
+        // Hex format (desktop)
+        match hex::decode(&peer_id_b64) {
+            Ok(b) if b.len() == 32 => b,
+            _ => return false,
+        }
+    } else {
+        // Base64 format
+        match base64::engine::general_purpose::STANDARD.decode(&peer_id_b64) {
+            Ok(b) if b.len() == 32 => b,
+            _ => return false,
+        }
     };
 
     // Decode signature

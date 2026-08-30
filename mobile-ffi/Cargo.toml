@@ -1,6 +1,6 @@
 [package]
 name = "convoyrun-mobile"
-version = "0.0.3"
+version = "0.0.4"
 edition = "2021"
 description = "ConvoyRun Mobile"
 license = "MIT OR Apache-2.0"
@@ -35,6 +35,7 @@ thiserror = "2.0"
 # Crypto (for signature verification)
 ed25519-dalek = "3.0"
 base64 = "0.22"
+hex = "0.4"
 
 # Async runtime
 tokio = { version = "1", features = ["full"] }
