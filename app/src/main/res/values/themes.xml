@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.ConvoyRun" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.ConvoyRun" parent="Theme.AppCompat.NoActionBar">
         <item name="android:statusBarColor">@color/bg_secondary</item>
         <item name="android:navigationBarColor">@color/bg_secondary</item>
         <item name="android:windowBackground">@color/bg_primary</item>
