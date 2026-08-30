@@ -205,8 +205,14 @@ class P2pManager(
      * Add an event to the local cache
      */
     private fun addEvent(event: ConvoyEvent) {
-        if (prefs.isBlocked(event.peerId)) return
-        if (!prefs.matchesLanguageFilter(event.event.languages)) return
+        if (prefs.isBlocked(event.peerId)) {
+            android.util.Log.w("P2pManager", "Event FILTERED: blocked peer ${event.peerId.take(8)} '${event.event.name}'")
+            return
+        }
+        if (!prefs.matchesLanguageFilter(event.event.languages)) {
+            android.util.Log.w("P2pManager", "Event FILTERED: language mismatch. eventLangs=${event.event.languages}, filter=${prefs.filteredLanguages.value} '${event.event.name}'")
+            return
+        }
 
         _events.update { current ->
             val mutable = current.toMutableList()
@@ -219,6 +225,9 @@ class P2pManager(
             mutable.sortBy { it.schedule.meetingTimestamp }
             mutable
         }
+
+        val totalEvents = _events.value.size
+        android.util.Log.i("P2pManager", "Event stored. Total events: $totalEvents")
 
         // Periodic purge every 50 events
         if (_events.value.size % 50 == 0) {

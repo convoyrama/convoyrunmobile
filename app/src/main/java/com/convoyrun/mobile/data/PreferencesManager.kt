@@ -57,6 +57,7 @@ class PreferencesManager(context: Context) {
     fun matchesLanguageFilter(eventLanguages: List<String>): Boolean {
         val filtered = _filteredLanguages.value
         if (filtered.isEmpty()) return true
+        if (eventLanguages.isEmpty()) return true
         return eventLanguages.any { filtered.contains(it) }
     }
 
