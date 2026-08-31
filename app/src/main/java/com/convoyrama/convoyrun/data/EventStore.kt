@@ -134,7 +134,7 @@ class EventStore(private val dataDir: File) {
     }
 
     companion object {
-        private const val RETENTION_DAYS = 1L
+        private const val RETENTION_DAYS = 3L
         private val lenientJson = Json { ignoreUnknownKeys = true }
     }
 }

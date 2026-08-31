@@ -1,6 +1,6 @@
 [package]
 name = "convoyrun-mobile"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2021"
 description = "ConvoyRun Mobile"
 license = "MIT OR Apache-2.0"
@@ -15,8 +15,8 @@ name = "uniffi-bindgen"
 path = "src/bin/uniffi-bindgen.rs"
 
 [dependencies]
-# Core iroh (transport + networking)
-iroh = "1.0"
+# Core iroh (transport + networking) — pinned to match desktop
+iroh = "=1.0.3"
 
 # Gossip protocol (topic subscription + broadcast)
 iroh-gossip = "0.101"

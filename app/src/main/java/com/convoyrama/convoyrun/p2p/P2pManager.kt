@@ -135,7 +135,8 @@ class P2pManager(
             android.util.Log.i("P2pManager", "Event receiver loop started")
             var loopCount = 0
 
-            // Separate coroutine for periodic peer count updates
+            // Separate coroutine for periodic peer count updates + re-broadcast on new peers
+            var lastPeerCount = 0
             launch {
                 while (isActive) {
                     delay(5000)
@@ -147,6 +148,12 @@ class P2pManager(
                             android.util.Log.i("P2pManager", "Status changed: ${_status.value} -> $newStatus (peers: $pc)")
                             _status.value = newStatus
                         }
+                        // Re-broadcast on ANY peer count increase (new peer connected)
+                        if (pc > lastPeerCount && pc > 0) {
+                            android.util.Log.i("P2pManager", "New peer(s) detected ($lastPeerCount -> $pc), re-broadcasting events...")
+                            reBroadcastAll(sub)
+                        }
+                        lastPeerCount = pc
                     } catch (e: Exception) {
                         android.util.Log.e("P2pManager", "Error updating peer count: ${e.message}")
                     }
@@ -177,7 +184,7 @@ class P2pManager(
                                 try {
                                     // Wrap in gossip envelope: {"type":"convoy","data":"<json>"}
                                     // Desktop expects this format (GossipMessage enum with serde tag)
-                                    val innerJson = Json.encodeToString(ConvoyEvent.serializer(), stored)
+                                    val innerJson = broadcastJson.encodeToString(ConvoyEvent.serializer(), stored)
                                     val envelope = buildJsonObject {
                                         put("type", "convoy")
                                         put("data", innerJson)
@@ -301,8 +308,8 @@ class P2pManager(
             return
         }
 
-        // Validate retention (not older than 24 hours)
-        if (event.schedule.meetingTimestamp < now - 86400) {
+        // Validate retention (not older than 3 days, matches desktop)
+        if (event.schedule.meetingTimestamp < now - (3 * 86400)) {
             android.util.Log.w("P2pManager", "Event REJECTED: already expired")
             return
         }
@@ -341,7 +348,7 @@ class P2pManager(
     }
 
     private fun purgeExpiredEvents() {
-        val cutoff = kotlinx.datetime.Clock.System.now().epochSeconds - 86400
+        val cutoff = kotlinx.datetime.Clock.System.now().epochSeconds - (3 * 86400)
         _events.update { current ->
             current.filter { it.schedule.meetingTimestamp >= cutoff }
         }
@@ -453,6 +460,28 @@ class P2pManager(
     }
 
     /**
+     * Re-broadcast all stored events to connected peers.
+     * Called when new peers connect to ensure they receive all known events.
+     */
+    private suspend fun reBroadcastAll(sub: GossipSubscriptionWrapper) {
+        val storedEvents = eventStore.getAll()
+        if (storedEvents.isEmpty()) return
+        android.util.Log.i("P2pManager", "Re-broadcasting ${storedEvents.size} events to new peer(s)...")
+        for (stored in storedEvents) {
+            try {
+                val innerJson = broadcastJson.encodeToString(ConvoyEvent.serializer(), stored)
+                val envelope = buildJsonObject {
+                    put("type", "convoy")
+                    put("data", innerJson)
+                }.toString()
+                sub.broadcast(envelope)
+            } catch (e: Exception) {
+                android.util.Log.e("P2pManager", "Re-broadcast failed for event ${stored.id}: ${e.message}")
+            }
+        }
+    }
+
+    /**
      * Extract convoy ID from JSON data without full parsing (for dedup).
      */
     private fun parseConvoyEventId(data: String): String {
@@ -502,6 +531,14 @@ class P2pManager(
     companion object {
         private const val PURGE_INTERVAL_MS = 3600_000L // 1 hour
         private const val MAX_SEEN_MESSAGES = 10_000
+
+        /** Json config for gossip re-broadcast: encodeDefaults=true ensures all fields
+         *  (schema, game, mode) are included; explicitNulls=false omits null flyer,
+         *  matching Rust's skip_serializing_if behavior so signatures remain valid. */
+        private val broadcastJson = Json {
+            encodeDefaults = true
+            explicitNulls = false
+        }
 
         var nativeLoaded = false
         init {
