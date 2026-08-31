@@ -56,7 +56,7 @@ class P2pManager(
     private var node: P2pNodeWrapper? = null
     private var subscription: GossipSubscriptionWrapper? = null
     private var receiverJob: Job? = null
-    private var starting = false
+    private val starting = java.util.concurrent.atomic.AtomicBoolean(false)
 
     // Persistent event store (disk-backed)
     private lateinit var eventStore: EventStore
@@ -71,8 +71,8 @@ class P2pManager(
      * Initialize and start the P2P node
      */
     fun start() {
-        if (node != null || starting) return
-        starting = true
+        if (node != null || starting.get()) return
+        starting.set(true)
 
         try {
             android.util.Log.i("P2pManager", "Starting P2P node...")
@@ -120,7 +120,7 @@ class P2pManager(
             android.util.Log.e("P2pManager", "Failed to start: ${e.message}", e)
             _status.value = Status.OFFLINE
         } finally {
-            starting = false
+            starting.set(false)
         }
     }
 
@@ -460,7 +460,7 @@ class P2pManager(
      * Stop the P2P node
      */
     fun stop() {
-        starting = false
+        starting.set(false)
         receiverJob?.cancel()
         receiverJob = null
 

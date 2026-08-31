@@ -58,7 +58,7 @@ class EventStore(private val dataDir: File) {
             try {
                 val json = lenientJson.encodeToString(events)
                 tmpFile.writeText(json)
-                tmpFile.renameTo(storeFile)
+                require(tmpFile.renameTo(storeFile)) { "Failed to rename temp events file" }
                 dirty.set(false)
             } catch (e: Exception) {
                 android.util.Log.e("EventStore", "Failed to save: ${e.message}")

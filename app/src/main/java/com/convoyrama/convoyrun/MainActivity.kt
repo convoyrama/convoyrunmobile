@@ -3,8 +3,6 @@ package com.convoyrama.convoyrun
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -23,6 +21,7 @@ import com.convoyrama.convoyrun.model.ConvoyEvent
 import com.convoyrama.convoyrun.p2p.P2pManager
 import com.convoyrama.convoyrun.ui.*
 import com.convoyrama.convoyrun.ui.theme.*
+import kotlinx.coroutines.*
 import kotlinx.datetime.*
 
 class MainActivity : AppCompatActivity() {
@@ -49,7 +48,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Start P2P once on create — survives background/foreground transitions
-        p2pManager?.start()
+        lifecycleScope.launch(Dispatchers.IO) {
+            p2pManager?.start()
+        }
     }
 
     override fun onDestroy() {
@@ -57,14 +58,6 @@ class MainActivity : AppCompatActivity() {
         // Stop P2P and cleanup only when Activity is truly destroyed
         p2pManager?.stop()
         p2pManager?.destroy()
-    }
-
-    private fun applyLocaleOverride(prefs: PreferencesManager) {
-        val lang = prefs.getAppLanguage()
-        if (lang != null) {
-            val locales = LocaleListCompat.forLanguageTags(lang)
-            AppCompatDelegate.setApplicationLocales(locales)
-        }
     }
 }
 

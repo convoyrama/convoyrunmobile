@@ -307,6 +307,7 @@ private fun DetailSection(
                     .then(
                         if (onLinkClick != null) {
                             Modifier.background(Accent.copy(alpha = 0.1f))
+                                .clickable { onLinkClick() }
                         } else {
                             Modifier
                         }

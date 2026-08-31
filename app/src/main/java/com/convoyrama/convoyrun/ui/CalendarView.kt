@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.sp
 import com.convoyrama.convoyrun.model.ConvoyEvent
 import com.convoyrama.convoyrun.ui.theme.*
 import kotlinx.datetime.*
+import java.time.format.TextStyle
+import java.util.Locale as JavaLocale
 
 @Composable
 fun CalendarView(
@@ -88,9 +90,15 @@ fun CalendarView(
         Row(
             modifier = Modifier.fillMaxWidth()
         ) {
-            listOf("L", "M", "X", "J", "V", "S", "D").forEach { day ->
+            val locale = JavaLocale.getDefault()
+            listOf(
+                java.time.DayOfWeek.MONDAY, java.time.DayOfWeek.TUESDAY,
+                java.time.DayOfWeek.WEDNESDAY, java.time.DayOfWeek.THURSDAY,
+                java.time.DayOfWeek.FRIDAY, java.time.DayOfWeek.SATURDAY,
+                java.time.DayOfWeek.SUNDAY
+            ).forEach { dayOfWeek ->
                 Text(
-                    text = day,
+                    text = dayOfWeek.getDisplayName(TextStyle.SHORT, locale).take(1).uppercase(locale),
                     style = MaterialTheme.typography.labelSmall,
                     color = TextMuted,
                     textAlign = TextAlign.Center,
