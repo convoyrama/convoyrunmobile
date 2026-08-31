@@ -16,6 +16,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import com.convoyrama.convoyrun.data.PreferencesManager
 import com.convoyrama.convoyrun.model.ConvoyEvent
 import com.convoyrama.convoyrun.p2p.P2pManager
