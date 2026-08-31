@@ -1,7 +1,7 @@
 //! Gossip module for ConvoyRun Mobile - topic subscription and event parsing
 //!
 //! This module handles receiving gossip events from the convoy topic.
-//! It is read-only: it receives events but does not publish them.
+//! Events are received, parsed, and passed to Kotlin for persistence and re-broadcast.
 
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

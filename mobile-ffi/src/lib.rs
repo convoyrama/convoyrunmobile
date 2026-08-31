@@ -1,8 +1,8 @@
 //! ConvoyRun Mobile FFI - UniFFI bindings for Android
 //!
-//! This crate provides a read-only P2P layer for ConvoyRun Mobile.
+//! This crate provides the P2P layer for ConvoyRun Mobile.
 //! It connects to the same iroh gossip network as the desktop app,
-//! receives convoy events, and exposes them to Kotlin via UniFFI.
+//! receives, persists, and re-broadcasts convoy events.
 
 mod android_init;
 mod gossip;

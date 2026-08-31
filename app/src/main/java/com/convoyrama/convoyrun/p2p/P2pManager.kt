@@ -1,6 +1,7 @@
 package com.convoyrama.convoyrun.p2p
 
 import android.content.Context
+import com.convoyrama.convoyrun.data.EventStore
 import com.convoyrama.convoyrun.data.PreferencesManager
 import com.convoyrama.convoyrun.model.*
 import uniffi.convoyrun_mobile_ffi.P2pNodeWrapper
@@ -57,6 +58,13 @@ class P2pManager(
     private var receiverJob: Job? = null
     private var starting = false
 
+    // Persistent event store (disk-backed)
+    private lateinit var eventStore: EventStore
+
+    // Deduplication for gossip messages
+    private val seenMessages = HashSet<String>()
+    private val seenMessagesOrder = ArrayList<String>()
+
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     /**
@@ -73,6 +81,16 @@ class P2pManager(
             val dataDir = File(context.filesDir, "p2p")
             dataDir.mkdirs()
             android.util.Log.i("P2pManager", "Data dir: ${dataDir.absolutePath}")
+
+            // Initialize event store (loads from disk, purges expired)
+            eventStore = EventStore(dataDir)
+            val loadedEvents = eventStore.load()
+            eventStore.purgeExpired()
+            if (eventStore.size() != loadedEvents.size) {
+                eventStore.save()
+            }
+            _events.value = eventStore.getAll()
+            android.util.Log.i("P2pManager", "Loaded ${eventStore.size()} events from disk")
 
             // Initialize Android context (for DNS resolver)
             ConvoyRunP2p.installAndroidContext(context.applicationContext)
@@ -93,6 +111,9 @@ class P2pManager(
 
             // Start receiving events
             startReceivingEvents()
+
+            // Start periodic purge (every 1 hour, matches desktop)
+            startPeriodicPurge()
 
             android.util.Log.i("P2pManager", "P2P manager started successfully")
         } catch (e: Exception) {
@@ -146,16 +167,16 @@ class P2pManager(
                         android.util.Log.i("P2pManager", "Status changed: ${_status.value} -> $newStatus (peers: $peerCount)")
                         _status.value = newStatus
 
-                        // Re-broadcast all known events when coming online
+                        // Re-broadcast all known events when coming online (reads from disk store)
                         if (newStatus == Status.ONLINE) {
-                            val currentEvents = _events.value
-                            android.util.Log.i("P2pManager", "Re-broadcasting ${currentEvents.size} events...")
-                            for (event in currentEvents) {
+                            val storedEvents = eventStore.getAll()
+                            android.util.Log.i("P2pManager", "Re-broadcasting ${storedEvents.size} events from store...")
+                            for (stored in storedEvents) {
                                 try {
-                                    val json = Json.encodeToString(ConvoyEvent.serializer(), event)
+                                    val json = Json.encodeToString(ConvoyEvent.serializer(), stored)
                                     sub.broadcast(json)
                                 } catch (e: Exception) {
-                                    android.util.Log.e("P2pManager", "Re-broadcast failed for event ${event.id}: ${e.message}")
+                                    android.util.Log.e("P2pManager", "Re-broadcast failed for event ${stored.id}: ${e.message}")
                                 }
                             }
                         }
@@ -180,6 +201,15 @@ class P2pManager(
 
                     when (message) {
                         is GossipMessage.Convoy -> {
+                            // Dedup check
+                            val dedupKey = "convoy:${parseConvoyEventId(message.data)}"
+                            if (!seenMessages.add(dedupKey)) {
+                                android.util.Log.d("P2pManager", "Skipping duplicate convoy")
+                                continue
+                            }
+                            seenMessagesOrder.add(dedupKey)
+                            trimSeenMessages()
+
                             android.util.Log.d("P2pManager", "Verifying signature for convoy...")
                             if (!verifyConvoySignature(message.data)) {
                                 android.util.Log.w("P2pManager", "Dropping event with invalid signature. Data preview: ${message.data.take(200)}")
@@ -195,6 +225,15 @@ class P2pManager(
                             }
                         }
                         is GossipMessage.DeleteConvoy -> {
+                            // Dedup check
+                            val dedupKey = "delete:${message.convoyId}:${message.peerId}"
+                            if (!seenMessages.add(dedupKey)) {
+                                android.util.Log.d("P2pManager", "Skipping duplicate delete")
+                                continue
+                            }
+                            seenMessagesOrder.add(dedupKey)
+                            trimSeenMessages()
+
                             android.util.Log.i("P2pManager", "Received delete for convoy: ${message.convoyId}")
                             removeEvent(message.convoyId)
                         }
@@ -217,7 +256,7 @@ class P2pManager(
     }
 
     /**
-     * Add an event to the local cache
+     * Add an event to the local cache and persist to disk.
      */
     private fun addEvent(event: ConvoyEvent) {
         if (prefs.isBlocked(event.peerId)) {
@@ -226,6 +265,37 @@ class P2pManager(
         }
         if (!prefs.matchesLanguageFilter(event.event.languages)) {
             android.util.Log.w("P2pManager", "Event FILTERED: language mismatch. eventLangs=${event.event.languages}, filter=${prefs.filteredLanguages.value} '${event.event.name}'")
+            return
+        }
+
+        // Validate field lengths (matches desktop lib.rs:276-278)
+        if (event.nickname.length > 64) {
+            android.util.Log.w("P2pManager", "Event REJECTED: nickname too long (${event.nickname.length})")
+            return
+        }
+        if (event.event.name.length > 200) {
+            android.util.Log.w("P2pManager", "Event REJECTED: name too long (${event.event.name.length})")
+            return
+        }
+        if (event.event.description.length > 5000) {
+            android.util.Log.w("P2pManager", "Event REJECTED: description too long (${event.event.description.length})")
+            return
+        }
+        if (event.event.server.length > 100) {
+            android.util.Log.w("P2pManager", "Event REJECTED: server too long (${event.event.server.length})")
+            return
+        }
+
+        // Validate publish window (within 90 days ahead)
+        val now = kotlinx.datetime.Clock.System.now().epochSeconds
+        if (event.schedule.meetingTimestamp > now + (90 * 86400)) {
+            android.util.Log.w("P2pManager", "Event REJECTED: meeting too far in future")
+            return
+        }
+
+        // Validate retention (not older than 24 hours)
+        if (event.schedule.meetingTimestamp < now - 86400) {
+            android.util.Log.w("P2pManager", "Event REJECTED: already expired")
             return
         }
 
@@ -241,8 +311,12 @@ class P2pManager(
             mutable
         }
 
+        // Persist to disk
+        eventStore.upsert(event)
+        eventStore.save()
+
         val totalEvents = _events.value.size
-        android.util.Log.i("P2pManager", "Event stored. Total events: $totalEvents")
+        android.util.Log.i("P2pManager", "Event stored. Total events: $totalEvents (on disk: ${eventStore.size()})")
 
         // Periodic purge every 50 events
         if (_events.value.size % 50 == 0) {
@@ -254,13 +328,17 @@ class P2pManager(
         _events.update { current ->
             current.filterNot { it.id == convoyId }
         }
+        eventStore.remove(convoyId)
+        eventStore.save()
     }
 
     private fun purgeExpiredEvents() {
-        val cutoff = kotlinx.datetime.Clock.System.now().epochSeconds - (3 * 86400)
+        val cutoff = kotlinx.datetime.Clock.System.now().epochSeconds - 86400
         _events.update { current ->
             current.filter { it.schedule.meetingTimestamp >= cutoff }
         }
+        eventStore.purgeExpired()
+        eventStore.save()
     }
 
     /**
@@ -309,23 +387,73 @@ class P2pManager(
         _events.update { current ->
             current.filterNot { it.peerId == peerId }
         }
+        eventStore.removeByPeer(setOf(peerId))
+        eventStore.save()
     }
 
     private fun applyBlacklist(data: String) {
         try {
             val json = Json.parseToJsonElement(data).jsonObject
             val peerIds = json["peerIds"]?.jsonArray
+            val blockedSet = mutableSetOf<String>()
             peerIds?.forEach { entry ->
                 val pid = entry.jsonPrimitive.content
                 if (!prefs.isBlocked(pid)) {
                     prefs.blockAuthor(pid, pid.take(8))
+                    blockedSet.add(pid)
                 }
             }
             val blocked = prefs.blockedAuthors.value.keys
             _events.update { current ->
                 current.filterNot { it.peerId in blocked }
             }
+            if (blockedSet.isNotEmpty()) {
+                eventStore.removeByPeer(blockedSet)
+                eventStore.save()
+            }
         } catch (_: Exception) { /* malformed blacklist */ }
+    }
+
+    /**
+     * Start periodic purge of expired events (every 1 hour, matches desktop).
+     */
+    private fun startPeriodicPurge() {
+        scope.launch {
+            while (isActive) {
+                delay(PURGE_INTERVAL_MS)
+                try {
+                    eventStore.purgeExpired()
+                    eventStore.save()
+                    _events.value = eventStore.getAll()
+                    android.util.Log.d("P2pManager", "Periodic purge done, ${eventStore.size()} events remaining")
+                } catch (e: Exception) {
+                    android.util.Log.e("P2pManager", "Periodic purge error: ${e.message}")
+                }
+            }
+        }
+    }
+
+    /**
+     * Evict oldest entries when dedup set exceeds capacity.
+     */
+    private fun trimSeenMessages() {
+        if (seenMessages.size > MAX_SEEN_MESSAGES) {
+            val toRemove = seenMessagesOrder.take(MAX_SEEN_MESSAGES / 2)
+            toRemove.forEach { seenMessages.remove(it) }
+            seenMessagesOrder.subList(0, MAX_SEEN_MESSAGES / 2).clear()
+        }
+    }
+
+    /**
+     * Extract convoy ID from JSON data without full parsing (for dedup).
+     */
+    private fun parseConvoyEventId(data: String): String {
+        return try {
+            val json = Json.parseToJsonElement(data).jsonObject
+            json["id"]?.toString()?.trim('"') ?: data.hashCode().toString()
+        } catch (_: Exception) {
+            data.hashCode().toString()
+        }
     }
 
     /**
@@ -335,6 +463,15 @@ class P2pManager(
         starting = false
         receiverJob?.cancel()
         receiverJob = null
+
+        // Flush event store to disk before shutdown
+        try {
+            if (::eventStore.isInitialized) {
+                eventStore.save()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("P2pManager", "Error saving event store: ${e.message}")
+        }
 
         try {
             node?.shutdown()
@@ -355,6 +492,9 @@ class P2pManager(
     }
 
     companion object {
+        private const val PURGE_INTERVAL_MS = 3600_000L // 1 hour
+        private const val MAX_SEEN_MESSAGES = 10_000
+
         var nativeLoaded = false
         init {
             try {

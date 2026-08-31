@@ -1,7 +1,7 @@
 //! P2P module for ConvoyRun Mobile - iroh 1.0 + gossip + DHT discovery
 //!
 //! This module sets up the iroh endpoint, gossip protocol, and router.
-//! It mirrors the desktop p2p.rs but is stripped down for mobile read-only use.
+//! It mirrors the desktop p2p.rs for full P2P node functionality.
 
 use anyhow::{Context, Result};
 use iroh::{endpoint::presets, protocol::Router, Endpoint, SecretKey};
