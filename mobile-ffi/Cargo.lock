@@ -522,13 +522,14 @@ dependencies = [
 
 [[package]]
 name = "convoyrun-mobile"
-version = "0.0.5"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "base64",
  "chrono",
  "distributed-topic-tracker",
  "ed25519-dalek",
+ "hex",
  "iroh",
  "iroh-gossip",
  "jni 0.22.4",

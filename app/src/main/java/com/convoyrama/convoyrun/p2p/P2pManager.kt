@@ -19,9 +19,11 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import java.io.File
 
 /**
@@ -173,8 +175,14 @@ class P2pManager(
                             android.util.Log.i("P2pManager", "Re-broadcasting ${storedEvents.size} events from store...")
                             for (stored in storedEvents) {
                                 try {
-                                    val json = Json.encodeToString(ConvoyEvent.serializer(), stored)
-                                    sub.broadcast(json)
+                                    // Wrap in gossip envelope: {"type":"convoy","data":"<json>"}
+                                    // Desktop expects this format (GossipMessage enum with serde tag)
+                                    val innerJson = Json.encodeToString(ConvoyEvent.serializer(), stored)
+                                    val envelope = buildJsonObject {
+                                        put("type", "convoy")
+                                        put("data", innerJson)
+                                    }.toString()
+                                    sub.broadcast(envelope)
                                 } catch (e: Exception) {
                                     android.util.Log.e("P2pManager", "Re-broadcast failed for event ${stored.id}: ${e.message}")
                                 }
