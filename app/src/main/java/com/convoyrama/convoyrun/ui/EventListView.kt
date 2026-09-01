@@ -64,7 +64,7 @@ fun EventListView(
             onValueChange = { searchQuery = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(36.dp)
+                .height(IntrinsicSize.Min)
                 .padding(horizontal = 12.dp, vertical = 0.dp),
             placeholder = {
                 Text(
