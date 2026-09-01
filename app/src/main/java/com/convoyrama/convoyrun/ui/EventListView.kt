@@ -3,14 +3,12 @@ package com.convoyrama.convoyrun.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,7 +17,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -62,43 +59,26 @@ fun EventListView(
 
     Column(modifier = modifier) {
         // Search bar
-        BasicTextField(
+        OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 4.dp),
-            textStyle = MaterialTheme.typography.labelSmall.copy(color = TextPrimary),
-            singleLine = true,
-            cursorBrush = SolidColor(Accent),
-            decorationBox = { innerTextField ->
-                OutlinedTextFieldDefaults.DecorationBox(
-                    value = searchQuery,
-                    innerTextField = innerTextField,
-                    enabled = true,
-                    singleLine = true,
-                    placeholder = {
-                        Text(
-                            text = stringResource(R.string.search_events),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextMuted
-                        )
-                    },
-                    container = {
-                        OutlinedTextFieldDefaults.ContainerBox(
-                            enabled = true,
-                            isError = false,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Accent,
-                                unfocusedBorderColor = Divider
-                            ),
-                            interactionSource = remember { MutableInteractionSource() },
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                    },
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                .height(36.dp)
+                .padding(horizontal = 12.dp, vertical = 0.dp),
+            placeholder = {
+                Text(
+                    text = stringResource(R.string.search_events),
+                    style = MaterialTheme.typography.labelSmall
                 )
-            }
+            },
+            singleLine = true,
+            shape = RoundedCornerShape(8.dp),
+            textStyle = MaterialTheme.typography.labelSmall,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Accent,
+                unfocusedBorderColor = Divider
+            )
         )
 
         if (!hasAnyEvents) {
