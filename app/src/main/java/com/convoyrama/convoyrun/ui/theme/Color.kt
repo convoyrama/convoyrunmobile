@@ -23,7 +23,6 @@ val EventTypeConvoy = Color(0xFF00AAFF)     // Blue - Convoy
 val EventTypeTruckShow = Color(0xFFFF9800)  // Orange - Truck Show
 val EventTypeExploration = Color(0xFF4CAF50) // Green - Exploration
 val EventTypeCompetition = Color(0xFFF44336) // Red - Competition
-val EventTypeCruise = Color(0xFF9C27B0)     // Purple - Cruise
 val EventTypeOther = Color(0xFF607D8B)      // Gray - Other
 
 // Game colors

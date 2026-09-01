@@ -88,14 +88,15 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
     }
     var selectedEvent by remember { mutableStateOf<ConvoyEvent?>(null) }
 
-    val dayEvents = remember(selectedDay, events?.value) {
-        p2pManager?.getEventsForDate(selectedDay) ?: emptyList()
-    }
-
     val todayTimestamp = remember {
         Clock.System.todayIn(TimeZone.currentSystemDefault())
             .atStartOfDayIn(TimeZone.currentSystemDefault())
             .epochSeconds
+    }
+    val isTodaySelected = selectedDay == todayTimestamp
+
+    val dayEvents = remember(selectedDay, events?.value) {
+        p2pManager?.getEventsForDate(selectedDay) ?: emptyList()
     }
     val todayEvents = remember(events?.value) {
         p2pManager?.getEventsForDate(todayTimestamp) ?: emptyList()
@@ -168,8 +169,8 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
             HorizontalDivider(color = Divider, thickness = 1.dp)
 
             EventListView(
-                todayEvents = todayEvents,
-                upcomingEvents = upcomingEvents,
+                todayEvents = if (isTodaySelected) todayEvents else dayEvents,
+                upcomingEvents = if (isTodaySelected) upcomingEvents else emptyList(),
                 onEventClicked = { selectedEvent = it },
                 modifier = Modifier
                     .fillMaxWidth()

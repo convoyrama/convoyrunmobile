@@ -50,7 +50,6 @@
     <string name="type_truck_show">Truck Show</string>
     <string name="type_exploration">Exploración</string>
     <string name="type_competition">Competición</string>
-    <string name="type_cruise">Paseo</string>
     <string name="type_other">Otro</string>
 
     <!-- Calendar day headers (Mon-Sun) -->

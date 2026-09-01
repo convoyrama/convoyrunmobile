@@ -41,16 +41,10 @@ fun StatusIndicator(
         label = "statusDotColor"
     )
 
-    val statusText = when (status) {
-        P2pManager.Status.ONLINE -> stringResource(R.string.status_online)
-        P2pManager.Status.SEARCHING -> stringResource(R.string.status_searching)
-        P2pManager.Status.OFFLINE -> stringResource(R.string.status_offline)
-    }
-
-    val displayText = if (status == P2pManager.Status.ONLINE && peerCount > 0) {
-        "$statusText ($peerCount)"
-    } else {
-        statusText
+    val displayText = when {
+        status == P2pManager.Status.ONLINE && peerCount > 0 -> "$peerCount"
+        status == P2pManager.Status.SEARCHING -> stringResource(R.string.status_searching)
+        else -> stringResource(R.string.status_offline)
     }
 
     // Pulsing animation only when searching

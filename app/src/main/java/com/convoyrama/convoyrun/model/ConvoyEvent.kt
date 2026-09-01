@@ -63,7 +63,6 @@ enum class EventType {
     @SerialName("truck_show") TruckShow,
     @SerialName("exploration") Exploration,
     @SerialName("competition") Competition,
-    @SerialName("cruise") Cruise,
     @SerialName("other") Other
 }
 

@@ -53,7 +53,6 @@
     <string name="type_truck_show">Truck Show</string>
     <string name="type_exploration">Exploration</string>
     <string name="type_competition">Competition</string>
-    <string name="type_cruise">Cruise</string>
     <string name="type_other">Other</string>
 
     <!-- Calendar day headers (Mon-Sun) -->
