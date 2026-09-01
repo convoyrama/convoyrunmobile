@@ -179,21 +179,23 @@ class P2pManager(
                         // Re-broadcast all known events when coming online (reads from disk store)
                         if (newStatus == Status.ONLINE) {
                             val storedEvents = eventStore.getAll()
-                            android.util.Log.i("P2pManager", "Re-broadcasting ${storedEvents.size} events from store...")
+                            android.util.Log.i("P2pManager", "Coming ONLINE: re-broadcasting ${storedEvents.size} events from store...")
+                            var onlineSuccess = 0
                             for (stored in storedEvents) {
                                 try {
-                                    // Wrap in gossip envelope: {"type":"convoy","data":"<json>"}
-                                    // Desktop expects this format (GossipMessage enum with serde tag)
                                     val innerJson = broadcastJson.encodeToString(ConvoyEvent.serializer(), stored)
                                     val envelope = buildJsonObject {
                                         put("type", "convoy")
                                         put("data", innerJson)
                                     }.toString()
+                                    android.util.Log.d("P2pManager", "Online-broadcast event ${stored.id}")
                                     sub.broadcast(envelope)
+                                    onlineSuccess++
                                 } catch (e: Exception) {
                                     android.util.Log.e("P2pManager", "Re-broadcast failed for event ${stored.id}: ${e.message}")
                                 }
                             }
+                            android.util.Log.i("P2pManager", "Online re-broadcast done: $onlineSuccess/${storedEvents.size}")
                         }
                     }
 
@@ -465,8 +467,12 @@ class P2pManager(
      */
     private suspend fun reBroadcastAll(sub: GossipSubscriptionWrapper) {
         val storedEvents = eventStore.getAll()
-        if (storedEvents.isEmpty()) return
+        if (storedEvents.isEmpty()) {
+            android.util.Log.w("P2pManager", "reBroadcastAll: eventStore is empty, nothing to broadcast")
+            return
+        }
         android.util.Log.i("P2pManager", "Re-broadcasting ${storedEvents.size} events to new peer(s)...")
+        var successCount = 0
         for (stored in storedEvents) {
             try {
                 val innerJson = broadcastJson.encodeToString(ConvoyEvent.serializer(), stored)
@@ -474,11 +480,14 @@ class P2pManager(
                     put("type", "convoy")
                     put("data", innerJson)
                 }.toString()
+                android.util.Log.d("P2pManager", "Broadcasting event ${stored.id} (${envelope.length} bytes)")
                 sub.broadcast(envelope)
+                successCount++
             } catch (e: Exception) {
                 android.util.Log.e("P2pManager", "Re-broadcast failed for event ${stored.id}: ${e.message}")
             }
         }
+        android.util.Log.i("P2pManager", "Re-broadcast done: $successCount/${storedEvents.size} sent")
     }
 
     /**
