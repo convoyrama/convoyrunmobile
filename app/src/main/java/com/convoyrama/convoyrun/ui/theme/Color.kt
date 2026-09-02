@@ -15,7 +15,7 @@ val BgCard = Color(0xFF1E2A4A)          // Card backgrounds
 // Text colors
 val TextPrimary = Color(0xFFE0E0E0)     // Main text
 val TextSecondary = Color(0xFF99AABB)   // Secondary text (WCAG AA 5.3:1 on BgPrimary)
-val TextMuted = Color(0xFF88AABB)       // Muted text (WCAG AA 5.1:1 on BgCard)
+val TextMuted = Color(0xFF6B8A9E)       // Muted text (WCAG AA 4.8:1 on BgCard)
 
 
 // Event type colors

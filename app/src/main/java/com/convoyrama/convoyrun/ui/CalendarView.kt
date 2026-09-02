@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -39,7 +40,7 @@ fun CalendarView(
         }
     }
 
-    Column(modifier = modifier.padding(horizontal = 6.dp, vertical = 2.dp)) {
+    Column(modifier = modifier.padding(horizontal = 6.dp, vertical = 4.dp)) {
         // Month navigation header
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -160,15 +161,19 @@ private fun MonthGrid(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(28.dp)
+                                .height(30.dp)
                                 .padding(1.dp)
                                 .clip(CircleShape)
                                 .background(
                                     when {
                                         isSelected -> Accent
-                                        isToday -> Accent.copy(alpha = 0.15f)
+                                        isToday -> Accent.copy(alpha = 0.12f)
                                         else -> Color.Transparent
                                     }
+                                )
+                                .then(
+                                    if (isSelected) Modifier.shadow(4.dp, CircleShape, Accent.copy(alpha = 0.3f))
+                                    else Modifier
                                 )
                                 .clickable { onDaySelected(dayTimestamp) },
                             contentAlignment = Alignment.Center
@@ -190,15 +195,15 @@ private fun MonthGrid(
                                 if (hasEvents && !isSelected) {
                                     Box(
                                         modifier = Modifier
-                                            .size(3.dp)
+                                            .size(4.dp)
                                             .clip(CircleShape)
-                                            .background(Accent)
+                                            .background(AccentLight)
                                     )
                                 }
                             }
                         }
                     } else {
-                        Spacer(modifier = Modifier.weight(1f).height(28.dp))
+                        Spacer(modifier = Modifier.weight(1f).height(30.dp))
                     }
                 }
             }

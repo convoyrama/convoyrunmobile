@@ -9,14 +9,19 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerInputPass
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,21 +69,30 @@ fun EventListView(
             onValueChange = { searchQuery = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(IntrinsicSize.Min)
-                .padding(horizontal = 12.dp, vertical = 0.dp),
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             placeholder = {
                 Text(
                     text = stringResource(R.string.search_events),
                     style = MaterialTheme.typography.labelSmall
                 )
             },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    tint = TextMuted,
+                    modifier = Modifier.size(18.dp)
+                )
+            },
             singleLine = true,
-            shape = RoundedCornerShape(8.dp),
+            shape = RoundedCornerShape(10.dp),
             textStyle = MaterialTheme.typography.labelSmall,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Accent,
-                unfocusedBorderColor = Divider
-            )
+                unfocusedBorderColor = Divider,
+                cursorColor = Accent
+            ),
+            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
         )
 
         if (!hasAnyEvents) {
@@ -139,20 +153,46 @@ private fun SectionHeader(text: String) {
         style = MaterialTheme.typography.labelMedium,
         color = Accent,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(vertical = 4.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp, horizontal = 2.dp),
+        letterSpacing = MaterialTheme.typography.labelMedium.letterSpacing
     )
+    HorizontalDivider(
+        color = Accent.copy(alpha = 0.1f),
+        thickness = 1.dp
+    )
+    Spacer(modifier = Modifier.height(4.dp))
 }
 
 @Composable
 private fun EventCard(event: ConvoyEvent, onClick: () -> Unit) {
+    val borderColor = getEventTypeColor(event.event.eventType)
+    var isPressed by remember { mutableStateOf(false) }
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .clickable(onClick = onClick),
+            .graphicsLayer {
+                scaleX = if (isPressed) 0.99f else 1f
+                scaleY = if (isPressed) 0.99f else 1f
+            }
+            .clickable(
+                onClick = onClick,
+                onClickLabel = event.event.name,
+                interactionSource = remember { MutableInteractionSource() }
+            ) { isPressed = true; onClick(); isPressed = false },
         colors = CardDefaults.cardColors(containerColor = BgCard)
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(10.dp)) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            // Left color border by event type
+            Box(
+                modifier = Modifier
+                    .width(3.dp)
+                    .fillMaxHeight()
+                    .background(borderColor)
+            )
+            Column(modifier = Modifier.weight(1f).padding(start = 9.dp, end = 12.dp, top = 11.dp, bottom = 10.dp)) {
             // Name + type badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -242,7 +282,7 @@ private fun EventCard(event: ConvoyEvent, onClick: () -> Unit) {
                     }
                 }
                 Text(
-                    text = routeText,
+                    text = "▶ $routeText",
                     style = MaterialTheme.typography.bodySmall,
                     color = TextMuted,
                     maxLines = 1,
@@ -255,7 +295,7 @@ private fun EventCard(event: ConvoyEvent, onClick: () -> Unit) {
             if (event.nickname.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = event.nickname,
+                    text = "● ${event.nickname}",
                     style = MaterialTheme.typography.bodySmall,
                     color = TextMuted,
                     maxLines = 1,
@@ -263,6 +303,7 @@ private fun EventCard(event: ConvoyEvent, onClick: () -> Unit) {
                     fontSize = 9.sp
                 )
             }
+        }
         }
     }
 }
