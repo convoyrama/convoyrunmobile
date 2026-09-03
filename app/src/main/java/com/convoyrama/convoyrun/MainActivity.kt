@@ -183,7 +183,7 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
                 myVotes = myVotes?.value ?: emptyMap(),
                 myPeerId = myPeerId.value,
                 onVote = { convoyId, direction ->
-                    lifecycleScope.launch(Dispatchers.IO) {
+                    this@MainActivity.lifecycleScope.launch(Dispatchers.IO) {
                         p2pManager?.vote(convoyId, direction)
                     }
                 },

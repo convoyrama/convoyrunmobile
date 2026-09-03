@@ -14,7 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -211,10 +210,10 @@ fun EventDetailView(
                     fontWeight = FontWeight.Bold
                 )
                 Icon(
-                    Icons.Default.ThumbDown,
+                    Icons.Default.ThumbUp,
                     contentDescription = null,
                     tint = if (myVote == -1) EventTypeCompetition else TextMuted,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(18.dp).graphicsLayer(rotationZ = 180f)
                 )
             }
 

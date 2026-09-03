@@ -12,7 +12,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -355,10 +354,10 @@ private fun EventCard(
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
-                        Icons.Default.ThumbDown,
+                        Icons.Default.ThumbUp,
                         contentDescription = stringResource(R.string.vote_down),
                         tint = if (myVote == -1) EventTypeCompetition else TextMuted,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(14.dp).graphicsLayer(rotationZ = 180f)
                     )
                 }
                 if (isOwnEvent) {
