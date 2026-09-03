@@ -17,9 +17,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -138,10 +137,9 @@ fun EventListView(
                         modifier = Modifier.align(Alignment.CenterEnd),
                         listState = listState
                     )
-                }
-            }
         }
     }
+}
 }
 
 @Composable
@@ -170,7 +168,6 @@ private fun EventCard(event: ConvoyEvent, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
             .graphicsLayer {
                 scaleX = if (isPressed) 0.99f else 1f
                 scaleY = if (isPressed) 0.99f else 1f
@@ -180,17 +177,17 @@ private fun EventCard(event: ConvoyEvent, onClick: () -> Unit) {
                 indication = null,
                 onClick = { isPressed = true; onClick(); isPressed = false }
             ),
+        shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(containerColor = BgCard)
     ) {
-        Row(modifier = Modifier.fillMaxWidth()) {
-            // Left color border by event type
-            Box(
-                modifier = Modifier
-                    .width(3.dp)
-                    .fillMaxHeight()
-                    .background(borderColor)
+        Column(modifier = Modifier.fillMaxWidth().drawBehind {
+            drawLine(
+                color = borderColor,
+                start = Offset(0f, 0f),
+                end = Offset(0f, size.height),
+                strokeWidth = 3.dp.toPx()
             )
-            Column(modifier = Modifier.weight(1f).padding(start = 9.dp, end = 12.dp, top = 11.dp, bottom = 10.dp)) {
+        }.padding(start = 9.dp, end = 12.dp, top = 11.dp, bottom = 10.dp)) {
             // Name + type badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
