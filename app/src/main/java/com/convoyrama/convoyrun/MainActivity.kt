@@ -16,6 +16,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.lifecycleScope
 import com.convoyrama.convoyrun.data.PreferencesManager
 import com.convoyrama.convoyrun.model.ConvoyEvent
@@ -65,6 +66,7 @@ class MainActivity : AppCompatActivity() {
 @Composable
 fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
     var showSettings by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     if (showSettings && p2pManager != null && prefsManager != null) {
         SettingsScreen(
@@ -183,7 +185,7 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
                 myVotes = myVotes?.value ?: emptyMap(),
                 myPeerId = myPeerId.value,
                 onVote = { convoyId, direction ->
-                    this@MainActivity.lifecycleScope.launch(Dispatchers.IO) {
+                    coroutineScope.launch(Dispatchers.IO) {
                         p2pManager?.vote(convoyId, direction)
                     }
                 },
