@@ -18,7 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -137,9 +139,10 @@ fun EventListView(
                         modifier = Modifier.align(Alignment.CenterEnd),
                         listState = listState
                     )
+                }
+            }
         }
     }
-}
 }
 
 @Composable
@@ -298,7 +301,6 @@ private fun EventCard(event: ConvoyEvent, onClick: () -> Unit) {
                     fontSize = 9.sp
                 )
             }
-        }
         }
     }
 }
