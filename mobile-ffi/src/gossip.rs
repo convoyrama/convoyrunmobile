@@ -172,6 +172,9 @@ pub fn verify_convoy_signature(convoy_json: &str) -> bool {
     // Clear signature for canonical form
     obj.insert("signature".to_string(), serde_json::Value::String(String::new()));
 
+    // Remove 'deleted' field if present — desktop signs without it (#[serde(skip)])
+    obj.remove("deleted");
+
     let canonical = canonical_json(&value);
 
     // Decode peer_id — supports both hex (desktop format) and base64
@@ -397,6 +400,48 @@ pub fn verify_blacklist_signature(blacklist_json: &str) -> bool {
     let signature = ed25519_dalek::Signature::from_bytes(&sig_array);
 
     verifying_key.verify(canonical.as_bytes(), &signature).is_ok()
+}
+
+/// Verify the ed25519 signature of a delete convoy message.
+/// The signed message format is "{convoy_id}:{peer_id}" (matches desktop convoy.rs:1125-1127).
+pub fn verify_delete_signature(peer_id: &str, convoy_id: &str, signature_b64: &str) -> bool {
+    use base64::Engine;
+    use ed25519_dalek::{Verifier, VerifyingKey};
+
+    // Decode peer_id — supports hex (64 chars) and base64
+    let peer_id_bytes = if peer_id.len() == 64 && peer_id.chars().all(|c| c.is_ascii_hexdigit()) {
+        match hex::decode(peer_id) {
+            Ok(b) if b.len() == 32 => b,
+            _ => return false,
+        }
+    } else {
+        match base64::engine::general_purpose::STANDARD.decode(peer_id) {
+            Ok(b) if b.len() == 32 => b,
+            _ => return false,
+        }
+    };
+
+    // Decode signature
+    let sig_bytes = match base64::engine::general_purpose::STANDARD.decode(signature_b64) {
+        Ok(b) if b.len() == 64 => b,
+        _ => return false,
+    };
+
+    // Reconstruct the signed message
+    let message = format!("{}:{}", convoy_id, peer_id);
+
+    let mut key_array = [0u8; 32];
+    key_array.copy_from_slice(&peer_id_bytes);
+    let verifying_key = match VerifyingKey::from_bytes(&key_array) {
+        Ok(k) => k,
+        Err(_) => return false,
+    };
+
+    let mut sig_array = [0u8; 64];
+    sig_array.copy_from_slice(&sig_bytes);
+    let signature = ed25519_dalek::Signature::from_bytes(&sig_array);
+
+    verifying_key.verify(message.as_bytes(), &signature).is_ok()
 }
 
 /// Canonical JSON serialization (sorted keys, recursive)

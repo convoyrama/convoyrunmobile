@@ -57,7 +57,8 @@ fun EventDetailView(
     event: ConvoyEvent,
     onDismiss: () -> Unit,
     onBlockAuthor: (peerId: String, nick: String) -> Unit = { _, _ -> },
-    score: Int = 0,
+    voteUp: Int = 0,
+    voteDown: Int = 0,
     myVote: Int? = null,
     modifier: Modifier = Modifier
 ) {
@@ -200,13 +201,9 @@ fun EventDetailView(
                     modifier = Modifier.size(18.dp)
                 )
                 Text(
-                    text = "$score",
+                    text = "▲ $voteUp ▼ $voteDown",
                     style = MaterialTheme.typography.titleMedium,
-                    color = when {
-                        score > 0 -> Accent
-                        score < 0 -> EventTypeCompetition
-                        else -> TextSecondary
-                    },
+                    color = TextSecondary,
                     fontWeight = FontWeight.Bold
                 )
                 Icon(

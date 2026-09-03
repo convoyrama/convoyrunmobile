@@ -260,6 +260,14 @@ pub fn verify_blacklist_signature(blacklist_json: String) -> bool {
     gossip::verify_blacklist_signature(&blacklist_json)
 }
 
+/// Verify the ed25519 signature of a delete convoy message.
+/// The signed message format is "{convoy_id}:{peer_id}".
+/// Returns true if the signature is valid for the given peer's public key.
+#[uniffi::export]
+pub fn verify_delete_signature(peer_id: String, convoy_id: String, signature: String) -> bool {
+    gossip::verify_delete_signature(&peer_id, &convoy_id, &signature)
+}
+
 /// Delete convoy info for UniFFI
 #[derive(uniffi::Record)]
 pub struct DeleteConvoyInfo {

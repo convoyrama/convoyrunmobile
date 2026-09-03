@@ -20,7 +20,8 @@ data class ConvoyEvent(
     val schedule: Schedule,
     val channel: String = "",
     val flyer: FlyerData? = null,
-    val signature: String = ""
+    val signature: String = "",
+    val deleted: Boolean = false
 )
 
 @Serializable

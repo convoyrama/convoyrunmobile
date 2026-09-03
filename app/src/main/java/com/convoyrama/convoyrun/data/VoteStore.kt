@@ -113,6 +113,18 @@ class VoteStore(private val dataDir: File) {
     }
 
     /**
+     * Get vote counts (upvotes, downvotes) for a convoy.
+     */
+    fun getVoteCounts(convoyId: String): Pair<Int, Int> {
+        synchronized(votes) {
+            val convoyVotes = votes[convoyId]?.values ?: return Pair(0, 0)
+            val up = convoyVotes.count { it.vote == 1 }
+            val down = convoyVotes.count { it.vote == -1 }
+            return Pair(up, down)
+        }
+    }
+
+    /**
      * Get all votes as a map.
      */
     fun getAll(): Map<String, List<VoteRecord>> {

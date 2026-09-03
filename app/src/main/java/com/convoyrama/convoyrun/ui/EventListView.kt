@@ -126,10 +126,12 @@ fun EventListView(
                             SectionHeader(text = stringResource(R.string.section_today))
                         }
                         items(filteredToday, key = { "today-${it.id}" }) { event ->
+                            val (vUp, vDown) = computeVoteCounts(votes[event.id])
                             EventCard(
                                 event = event,
                                 onClick = { onEventClicked(event) },
-                                score = computeScore(votes[event.id]),
+                                voteUp = vUp,
+                                voteDown = vDown,
                                 myVote = myVotes[event.id],
                                 isOwnEvent = event.peerId == myPeerId,
                                 onVote = { direction -> onVote(event.id, direction) }
@@ -143,10 +145,12 @@ fun EventListView(
                             SectionHeader(text = stringResource(R.string.section_upcoming))
                         }
                         items(filteredUpcoming, key = { "upcoming-${it.id}" }) { event ->
+                            val (vUp, vDown) = computeVoteCounts(votes[event.id])
                             EventCard(
                                 event = event,
                                 onClick = { onEventClicked(event) },
-                                score = computeScore(votes[event.id]),
+                                voteUp = vUp,
+                                voteDown = vDown,
                                 myVote = myVotes[event.id],
                                 isOwnEvent = event.peerId == myPeerId,
                                 onVote = { direction -> onVote(event.id, direction) }
@@ -188,7 +192,8 @@ private fun SectionHeader(text: String) {
 private fun EventCard(
     event: ConvoyEvent,
     onClick: () -> Unit,
-    score: Int = 0,
+    voteUp: Int = 0,
+    voteDown: Int = 0,
     myVote: Int? = null,
     isOwnEvent: Boolean = false,
     onVote: (Int) -> Unit = {}
@@ -337,13 +342,9 @@ private fun EventCard(
                 }
                 // Score
                 Text(
-                    text = "$score",
+                    text = "▲ $voteUp ▼ $voteDown",
                     style = MaterialTheme.typography.labelSmall,
-                    color = when {
-                        score > 0 -> Accent
-                        score < 0 -> EventTypeCompetition
-                        else -> TextSecondary
-                    },
+                    color = TextSecondary,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -391,8 +392,11 @@ private fun formatMeetingTime(timestamp: Long): String {
     return sdf.format(Date(timestamp * 1000))
 }
 
-private fun computeScore(votes: List<VoteRecord>?): Int {
-    return votes?.sumOf { it.vote } ?: 0
+private fun computeVoteCounts(votes: List<VoteRecord>?): Pair<Int, Int> {
+    if (votes == null) return Pair(0, 0)
+    val up = votes.count { it.vote == 1 }
+    val down = votes.count { it.vote == -1 }
+    return Pair(up, down)
 }
 
 @Composable

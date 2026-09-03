@@ -117,8 +117,18 @@ class EventStore(private val dataDir: File) {
 
     /**
      * Get all stored events, sorted by meeting timestamp.
+     * Excludes events marked as deleted.
      */
     fun getAll(): List<ConvoyEvent> {
+        synchronized(events) {
+            return events.values.filter { !it.deleted }.sortedBy { it.schedule.meetingTimestamp }
+        }
+    }
+
+    /**
+     * Get all stored events including deleted ones (for re-broadcast).
+     */
+    fun getAllIncludingDeleted(): List<ConvoyEvent> {
         synchronized(events) {
             return events.values.sortedBy { it.schedule.meetingTimestamp }
         }

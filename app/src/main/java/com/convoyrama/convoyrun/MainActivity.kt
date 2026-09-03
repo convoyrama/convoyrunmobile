@@ -198,7 +198,8 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
 
     selectedEvent?.let { event ->
         val eventVotes = votes?.value?.get(event.id) ?: emptyList()
-        val eventScore = eventVotes.sumOf { it.vote }
+        val eventVoteUp = eventVotes.count { it.vote == 1 }
+        val eventVoteDown = eventVotes.count { it.vote == -1 }
         val eventMyVote = myVotes?.value?.get(event.id)
         EventDetailView(
             event = event,
@@ -207,7 +208,8 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
                 p2pManager?.blockAuthor(peerId, nick)
                 selectedEvent = null
             },
-            score = eventScore,
+            voteUp = eventVoteUp,
+            voteDown = eventVoteDown,
             myVote = eventMyVote
         )
     }
