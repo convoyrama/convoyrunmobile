@@ -1,5 +1,7 @@
 package com.convoyrama.convoyrun.model
 
+import androidx.annotation.StringRes
+import com.convoyrama.convoyrun.R
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
@@ -78,12 +80,12 @@ enum class Game {
  * Game modes (matches desktop Mode enum)
  */
 @Serializable
-enum class GameMode {
-    @SerialName("simulation") Simulation,
-    @SerialName("realistic") Realistic,
-    @SerialName("arcade") Arcade,
-    @SerialName("race") Race,
-    @SerialName("other") Other
+enum class GameMode(@StringRes val displayNameRes: Int) {
+    @SerialName("simulation") Simulation(R.string.mode_simulation),
+    @SerialName("realistic") Realistic(R.string.mode_realistic),
+    @SerialName("arcade") Arcade(R.string.mode_arcade),
+    @SerialName("race") Race(R.string.mode_race),
+    @SerialName("other") Other(R.string.mode_other)
 }
 
 /**
@@ -152,6 +154,27 @@ private val lenientJson = Json { ignoreUnknownKeys = true }
 fun parseConvoyEvent(json: String): ConvoyEvent? {
     return try {
         lenientJson.decodeFromString<ConvoyEvent>(json)
+    } catch (_: Exception) {
+        null
+    }
+}
+
+/**
+ * Vote record (matches desktop VoteRecord in convoy.rs)
+ */
+@Serializable
+data class VoteRecord(
+    val schema: String = "convoyrun/vote/v1",
+    val convoyId: String,
+    val voterPeerId: String,
+    val vote: Int,           // +1 (upvote) or -1 (downvote)
+    val ts: Long,
+    val signature: String = ""
+)
+
+fun parseVoteRecord(json: String): VoteRecord? {
+    return try {
+        lenientJson.decodeFromString<VoteRecord>(json)
     } catch (_: Exception) {
         null
     }

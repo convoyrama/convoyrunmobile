@@ -3,10 +3,14 @@ package com.convoyrama.convoyrun.p2p
 import android.content.Context
 import com.convoyrama.convoyrun.data.EventStore
 import com.convoyrama.convoyrun.data.PreferencesManager
+import com.convoyrama.convoyrun.data.VoteStore
 import com.convoyrama.convoyrun.model.*
 import uniffi.convoyrun_mobile_ffi.P2pNodeWrapper
 import uniffi.convoyrun_mobile_ffi.GossipSubscriptionWrapper
 import uniffi.convoyrun_mobile_ffi.verifyConvoySignature
+import uniffi.convoyrun_mobile_ffi.verifyVoteSignature
+import uniffi.convoyrun_mobile_ffi.verifyBlacklistSignature
+import uniffi.convoyrun_mobile_ffi.signVote
 import uniffi.convoyrun_mobile_ffi.createP2pNode
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,6 +59,12 @@ class P2pManager(
     private val _events = MutableStateFlow<List<ConvoyEvent>>(emptyList())
     val events: StateFlow<List<ConvoyEvent>> = _events.asStateFlow()
 
+    private val _votes = MutableStateFlow<Map<String, List<VoteRecord>>>(emptyMap())
+    val votes: StateFlow<Map<String, List<VoteRecord>>> = _votes.asStateFlow()
+
+    private val _myVotes = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val myVotes: StateFlow<Map<String, Int>> = _myVotes.asStateFlow()
+
     private var node: P2pNodeWrapper? = null
     private var subscription: GossipSubscriptionWrapper? = null
     private var receiverJob: Job? = null
@@ -62,6 +72,9 @@ class P2pManager(
 
     // Persistent event store (disk-backed)
     private lateinit var eventStore: EventStore
+
+    // Persistent vote store (disk-backed)
+    private lateinit var voteStore: VoteStore
 
     // Deduplication for gossip messages
     private val seenMessages = HashSet<String>()
@@ -93,6 +106,14 @@ class P2pManager(
             }
             _events.value = eventStore.getAll()
             android.util.Log.i("P2pManager", "Loaded ${eventStore.size()} events from disk")
+
+            // Initialize vote store (loads from disk, purges expired)
+            voteStore = VoteStore(dataDir)
+            voteStore.load()
+            voteStore.purgeExpired()
+            voteStore.save()
+            _votes.value = voteStore.getAll()
+            android.util.Log.i("P2pManager", "Loaded votes from disk")
 
             // Initialize Android context (for DNS resolver)
             ConvoyRunP2p.installAndroidContext(context.applicationContext)
@@ -254,6 +275,40 @@ class P2pManager(
                             android.util.Log.i("P2pManager", "Received delete for convoy: ${message.convoyId}")
                             removeEvent(message.convoyId)
                         }
+                        is GossipMessage.Vote -> {
+                            // Dedup check
+                            val voteConvoyId = parseVoteConvoyId(message.data)
+                            val voteVoterPeerId = parseVoteVoterPeerId(message.data)
+                            val dedupKey = "vote:$voteConvoyId:$voteVoterPeerId"
+                            if (!seenMessages.add(dedupKey)) {
+                                android.util.Log.d("P2pManager", "Skipping duplicate vote")
+                                continue
+                            }
+                            seenMessagesOrder.add(dedupKey)
+                            trimSeenMessages()
+
+                            android.util.Log.d("P2pManager", "Verifying signature for vote...")
+                            if (!verifyVoteSignature(message.data)) {
+                                android.util.Log.w("P2pManager", "Dropping vote with invalid signature")
+                                continue
+                            }
+                            val voteRecord = parseVoteRecord(message.data)
+                            if (voteRecord == null || (voteRecord.vote != 1 && voteRecord.vote != -1)) {
+                                android.util.Log.w("P2pManager", "Invalid vote record")
+                                continue
+                            }
+                            // Validate field lengths (matches desktop convoy.rs validation)
+                            if (voteRecord.convoyId.length > 64 || voteRecord.voterPeerId.length > 128) {
+                                android.util.Log.w("P2pManager", "Vote REJECTED: fields too long")
+                                continue
+                            }
+                            // Verify convoy exists locally (matches desktop lib.rs:1059-1061)
+                            if (_events.value.none { it.id == voteRecord.convoyId }) {
+                                android.util.Log.d("P2pManager", "Vote for unknown convoy ${voteRecord.convoyId}, storing anyway")
+                            }
+                            android.util.Log.i("P2pManager", "Received vote: ${voteRecord.vote} for convoy ${voteRecord.convoyId}")
+                            addVote(voteRecord)
+                        }
                         is GossipMessage.Blacklist -> {
                             android.util.Log.i("P2pManager", "Received blacklist")
                             applyBlacklist(message.data)
@@ -349,6 +404,99 @@ class P2pManager(
         eventStore.save()
     }
 
+    /**
+     * Add a vote from the network to the local store.
+     */
+    private fun addVote(vote: VoteRecord) {
+        // Filter: skip votes from blocked peers
+        if (prefs.isBlocked(vote.voterPeerId)) {
+            android.util.Log.d("P2pManager", "Vote FILTERED: blocked peer ${vote.voterPeerId.take(8)}")
+            return
+        }
+        voteStore.upsert(vote)
+        voteStore.save()
+        _votes.value = voteStore.getAll()
+        // Update myVotes if it's from this peer
+        val myPeerId = node?.peerId() ?: return
+        if (vote.voterPeerId == myPeerId) {
+            _myVotes.value = voteStore.getMyVotes(myPeerId)
+        }
+    }
+
+    /**
+     * Vote on a convoy event.
+     * Validates, signs, stores locally, and broadcasts to the network.
+     */
+    suspend fun vote(convoyId: String, vote: Int) {
+        if (vote != 1 && vote != -1) return
+
+        val sub = subscription ?: return
+        val peerId = node?.peerId() ?: return
+
+        // Prevent self-vote
+        val convoy = _events.value.find { it.id == convoyId }
+        if (convoy != null && convoy.peerId == peerId) {
+            android.util.Log.w("P2pManager", "Cannot vote on own convoy")
+            return
+        }
+
+        // Sign vote via FFI
+        val dataDir = File(context.filesDir, "p2p").absolutePath
+        val voteJson = try {
+            signVote(dataDir, convoyId, vote)
+        } catch (e: Exception) {
+            android.util.Log.e("P2pManager", "Failed to sign vote: ${e.message}")
+            return
+        }
+
+        val voteRecord = parseVoteRecord(voteJson)
+        if (voteRecord == null) {
+            android.util.Log.e("P2pManager", "Failed to parse signed vote")
+            return
+        }
+
+        // Store locally
+        voteStore.upsert(voteRecord)
+        _votes.value = voteStore.getAll()
+        _myVotes.value = voteStore.getMyVotes(peerId)
+
+        // Broadcast to network
+        try {
+            val envelope = buildJsonObject {
+                put("type", "vote")
+                put("data", voteJson)
+            }.toString()
+            sub.broadcast(envelope)
+            android.util.Log.i("P2pManager", "Vote broadcasted: $vote for convoy $convoyId")
+        } catch (e: Exception) {
+            android.util.Log.e("P2pManager", "Failed to broadcast vote: ${e.message}")
+        }
+    }
+
+    /**
+     * Extract convoy ID from vote JSON without full parsing (for dedup).
+     */
+    private fun parseVoteConvoyId(data: String): String {
+        return try {
+            val json = Json.parseToJsonElement(data).jsonObject
+            json["convoyId"]?.toString()?.trim('"') ?: data.hashCode().toString()
+        } catch (_: Exception) {
+            data.hashCode().toString()
+        }
+    }
+
+    /**
+     * Extract voter peer ID from vote JSON without full parsing (for dedup).
+     */
+    private fun parseVoteVoterPeerId(data: String): String {
+        return try {
+            val json = Json.parseToJsonElement(data).jsonObject
+            json["voterPeerId"]?.toString()?.trim('"') ?: ""
+        } catch (_: Exception) {
+            ""
+        }
+    }
+
     private fun purgeExpiredEvents() {
         val cutoff = kotlinx.datetime.Clock.System.now().epochSeconds - (3 * 86400)
         _events.update { current ->
@@ -392,6 +540,13 @@ class P2pManager(
 
     fun getAllEvents(): List<ConvoyEvent> = filteredEvents()
 
+    /**
+     * Get the local node's peer ID.
+     */
+    fun getMyPeerId(): String {
+        return node?.peerId() ?: ""
+    }
+
     private fun filteredEvents(): List<ConvoyEvent> {
         val blocked = prefs.blockedAuthors.value.keys
         return _events.value.filter { event ->
@@ -410,19 +565,25 @@ class P2pManager(
 
     private fun applyBlacklist(data: String) {
         try {
+            // Verify blacklist signature (matches desktop lib.rs:385-395)
+            if (!verifyBlacklistSignature(data)) {
+                android.util.Log.w("P2pManager", "Dropping blacklist with invalid signature")
+                return
+            }
             val json = Json.parseToJsonElement(data).jsonObject
-            val peerIds = json["peerIds"]?.jsonArray
+            // Desktop sends "blocked" field (BlacklistRecord.blocked: Vec<String>)
+            val blocked = json["blocked"]?.jsonArray ?: json["peerIds"]?.jsonArray
             val blockedSet = mutableSetOf<String>()
-            peerIds?.forEach { entry ->
+            blocked?.forEach { entry ->
                 val pid = entry.jsonPrimitive.content
                 if (!prefs.isBlocked(pid)) {
                     prefs.blockAuthor(pid, pid.take(8))
                     blockedSet.add(pid)
                 }
             }
-            val blocked = prefs.blockedAuthors.value.keys
+            val blockedKeys = prefs.blockedAuthors.value.keys
             _events.update { current ->
-                current.filterNot { it.peerId in blocked }
+                current.filterNot { it.peerId in blockedKeys }
             }
             if (blockedSet.isNotEmpty()) {
                 eventStore.removeByPeer(blockedSet)
@@ -462,8 +623,8 @@ class P2pManager(
     }
 
     /**
-     * Re-broadcast all stored events to connected peers.
-     * Called when new peers connect to ensure they receive all known events.
+     * Re-broadcast all stored events and votes to connected peers.
+     * Called when new peers connect to ensure they receive all known data.
      */
     private suspend fun reBroadcastAll(sub: GossipSubscriptionWrapper) {
         val storedEvents = eventStore.getAll()
@@ -487,7 +648,35 @@ class P2pManager(
                 android.util.Log.e("P2pManager", "Re-broadcast failed for event ${stored.id}: ${e.message}")
             }
         }
-        android.util.Log.i("P2pManager", "Re-broadcast done: $successCount/${storedEvents.size} sent")
+        android.util.Log.i("P2pManager", "Event re-broadcast done: $successCount/${storedEvents.size} sent")
+
+        // Re-broadcast votes for active convoys (last 3 days)
+        val allVotes = voteStore.getAll()
+        val now = kotlinx.datetime.Clock.System.now().epochSeconds
+        val cutoff = now - (3 * 86400)
+        val activeConvoyIds = storedEvents.filter { it.schedule.meetingTimestamp >= cutoff }.map { it.id }.toSet()
+        val activeVotes = allVotes.filter { (convoyId, _) -> convoyId in activeConvoyIds }
+
+        if (activeVotes.isNotEmpty()) {
+            var voteSuccess = 0
+            val totalVotes = activeVotes.values.sumOf { it.size }
+            for ((_, voteList) in activeVotes) {
+                for (vote in voteList) {
+                    try {
+                        val innerJson = broadcastJson.encodeToString(VoteRecord.serializer(), vote)
+                        val envelope = buildJsonObject {
+                            put("type", "vote")
+                            put("data", innerJson)
+                        }.toString()
+                        sub.broadcast(envelope)
+                        voteSuccess++
+                    } catch (e: Exception) {
+                        android.util.Log.e("P2pManager", "Re-broadcast failed for vote: ${e.message}")
+                    }
+                }
+            }
+            android.util.Log.i("P2pManager", "Vote re-broadcast done: $voteSuccess/$totalVotes sent")
+        }
     }
 
     /**
@@ -510,13 +699,16 @@ class P2pManager(
         receiverJob?.cancel()
         receiverJob = null
 
-        // Flush event store to disk before shutdown
+        // Flush event store and vote store to disk before shutdown
         try {
             if (::eventStore.isInitialized) {
                 eventStore.save()
             }
+            if (::voteStore.isInitialized) {
+                voteStore.save()
+            }
         } catch (e: Exception) {
-            android.util.Log.e("P2pManager", "Error saving event store: ${e.message}")
+            android.util.Log.e("P2pManager", "Error saving stores: ${e.message}")
         }
 
         try {

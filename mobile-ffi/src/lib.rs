@@ -236,6 +236,30 @@ pub fn verify_convoy_signature(convoy_json: String) -> bool {
     gossip::verify_convoy_signature(&convoy_json)
 }
 
+/// Sign a vote and return the serialized VoteRecord JSON.
+///
+/// Reads the secret key from `{data_dir}/node_identity.key`, creates a VoteRecord,
+/// signs it with ed25519, and returns the complete JSON string.
+#[uniffi::export]
+pub fn sign_vote(data_dir: String, convoy_id: String, vote: i32) -> Result<String, P2pError> {
+    gossip::sign_vote(&data_dir, convoy_id, vote)
+        .map_err(|e| P2pError::InvalidData(e))
+}
+
+/// Verify the ed25519 signature of a vote record JSON.
+/// Returns true if the signature is valid.
+#[uniffi::export]
+pub fn verify_vote_signature(vote_json: String) -> bool {
+    gossip::verify_vote_signature(&vote_json)
+}
+
+/// Verify the ed25519 signature of a blacklist record JSON.
+/// Returns true if the signature is valid.
+#[uniffi::export]
+pub fn verify_blacklist_signature(blacklist_json: String) -> bool {
+    gossip::verify_blacklist_signature(&blacklist_json)
+}
+
 /// Delete convoy info for UniFFI
 #[derive(uniffi::Record)]
 pub struct DeleteConvoyInfo {

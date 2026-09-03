@@ -13,6 +13,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,6 +33,7 @@ import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.convoyrama.convoyrun.R
 import com.convoyrama.convoyrun.model.*
+import com.convoyrama.convoyrun.model.VoteRecord
 import com.convoyrama.convoyrun.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -55,6 +58,8 @@ fun EventDetailView(
     event: ConvoyEvent,
     onDismiss: () -> Unit,
     onBlockAuthor: (peerId: String, nick: String) -> Unit = { _, _ -> },
+    score: Int = 0,
+    myVote: Int? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -106,7 +111,7 @@ fun EventDetailView(
 
                 IconButton(onClick = {
                     try {
-                        val shareText = buildShareText(event)
+                        val shareText = buildShareText(event, context)
                         val intent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
                             putExtra(Intent.EXTRA_TEXT, shareText)
@@ -171,7 +176,7 @@ fun EventDetailView(
                     color = BgCard
                 ) {
                     Text(
-                        text = event.event.mode.name,
+                        text = stringResource(event.event.mode.displayNameRes),
                         style = MaterialTheme.typography.labelLarge,
                         color = TextSecondary,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
@@ -180,6 +185,38 @@ fun EventDetailView(
             }
 
             Spacer(modifier = Modifier.height(20.dp))
+
+            // Score display (read-only, no voting buttons — voting is in the list)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    Icons.Default.ThumbUp,
+                    contentDescription = null,
+                    tint = if (myVote == 1) Accent else TextMuted,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    text = "$score",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = when {
+                        score > 0 -> Accent
+                        score < 0 -> EventTypeCompetition
+                        else -> TextSecondary
+                    },
+                    fontWeight = FontWeight.Bold
+                )
+                Icon(
+                    Icons.Default.ThumbDown,
+                    contentDescription = null,
+                    tint = if (myVote == -1) EventTypeCompetition else TextMuted,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
 
             // Meeting time
             DetailSection(
@@ -326,11 +363,11 @@ private fun DetailSection(
 /**
  * Build share text for event
  */
-private fun buildShareText(event: ConvoyEvent): String {
+private fun buildShareText(event: ConvoyEvent, context: android.content.Context): String {
     return buildString {
         appendLine(event.event.name)
         appendLine()
-        appendLine("🎮 ${event.event.game.name} — ${event.event.mode.name}")
+        appendLine("🎮 ${event.event.game.name} — ${context.getString(event.event.mode.displayNameRes)}")
         appendLine("📅 ${formatFullMeetingTime(event.schedule.meetingTimestamp, event.schedule.ianaTimeZone)}")
         if (event.event.server.isNotEmpty()) {
             appendLine("🖥️ ${event.event.server}")
@@ -360,10 +397,10 @@ private fun formatFullMeetingTime(timestamp: Long, ianaTimeZone: String): String
         val zoneId = java.time.ZoneId.of(ianaTimeZone)
         val sdf = SimpleDateFormat("EEEE, d MMMM yyyy HH:mm", Locale.getDefault())
         sdf.timeZone = java.util.TimeZone.getTimeZone(zoneId)
-        "${sdf.format(date)} ($tzLabel)"
+        "${sdf.format(date).replaceFirstChar { it.uppercase() }} ($tzLabel)"
     } catch (_: Exception) {
         val sdf = SimpleDateFormat("EEEE, d MMMM yyyy HH:mm", Locale.getDefault())
-        "${sdf.format(date)} ($tzLabel)"
+        "${sdf.format(date).replaceFirstChar { it.uppercase() }} ($tzLabel)"
     }
 }
 

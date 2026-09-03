@@ -37,6 +37,11 @@
     <string name="close">Close</string>
     <string name="block_author">Block Author</string>
 
+    <!-- Voting -->
+    <string name="vote_up">Vote up</string>
+    <string name="vote_down">Vote down</string>
+    <string name="vote_self_hint">Your event</string>
+
     <!-- Settings -->
     <string name="settings_title">Settings</string>
     <string name="settings_back">Back</string>
@@ -54,6 +59,13 @@
     <string name="type_exploration">Exploration</string>
     <string name="type_competition">Competition</string>
     <string name="type_other">Other</string>
+
+    <!-- Game modes -->
+    <string name="mode_simulation">Simulation</string>
+    <string name="mode_realistic">Realistic</string>
+    <string name="mode_arcade">Arcade</string>
+    <string name="mode_race">Race</string>
+    <string name="mode_other">Other</string>
 
     <!-- Calendar day headers (Mon-Sun) -->
     <string name="day_mon">M</string>

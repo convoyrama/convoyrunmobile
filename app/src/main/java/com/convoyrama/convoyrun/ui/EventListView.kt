@@ -11,6 +11,8 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -29,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.convoyrama.convoyrun.R
 import com.convoyrama.convoyrun.model.*
+import com.convoyrama.convoyrun.model.VoteRecord
 import com.convoyrama.convoyrun.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -38,6 +41,10 @@ fun EventListView(
     todayEvents: List<ConvoyEvent>,
     upcomingEvents: List<ConvoyEvent>,
     onEventClicked: (ConvoyEvent) -> Unit,
+    votes: Map<String, List<VoteRecord>> = emptyMap(),
+    myVotes: Map<String, Int> = emptyMap(),
+    myPeerId: String = "",
+    onVote: (String, Int) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -120,7 +127,14 @@ fun EventListView(
                             SectionHeader(text = stringResource(R.string.section_today))
                         }
                         items(filteredToday, key = { "today-${it.id}" }) { event ->
-                            EventCard(event = event, onClick = { onEventClicked(event) })
+                            EventCard(
+                                event = event,
+                                onClick = { onEventClicked(event) },
+                                score = computeScore(votes[event.id]),
+                                myVote = myVotes[event.id],
+                                isOwnEvent = event.peerId == myPeerId,
+                                onVote = { direction -> onVote(event.id, direction) }
+                            )
                         }
                     }
 
@@ -130,7 +144,14 @@ fun EventListView(
                             SectionHeader(text = stringResource(R.string.section_upcoming))
                         }
                         items(filteredUpcoming, key = { "upcoming-${it.id}" }) { event ->
-                            EventCard(event = event, onClick = { onEventClicked(event) })
+                            EventCard(
+                                event = event,
+                                onClick = { onEventClicked(event) },
+                                score = computeScore(votes[event.id]),
+                                myVote = myVotes[event.id],
+                                isOwnEvent = event.peerId == myPeerId,
+                                onVote = { direction -> onVote(event.id, direction) }
+                            )
                         }
                     }
                 }
@@ -165,7 +186,14 @@ private fun SectionHeader(text: String) {
 }
 
 @Composable
-private fun EventCard(event: ConvoyEvent, onClick: () -> Unit) {
+private fun EventCard(
+    event: ConvoyEvent,
+    onClick: () -> Unit,
+    score: Int = 0,
+    myVote: Int? = null,
+    isOwnEvent: Boolean = false,
+    onVote: (Int) -> Unit = {}
+) {
     val borderColor = getEventTypeColor(event.event.eventType)
     var isPressed by remember { mutableStateOf(false) }
     Card(
@@ -237,7 +265,7 @@ private fun EventCard(event: ConvoyEvent, onClick: () -> Unit) {
                     )
                 }
                 Text(
-                    text = event.event.mode.name,
+                    text = stringResource(event.event.mode.displayNameRes),
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary,
                     fontSize = 9.sp
@@ -289,6 +317,60 @@ private fun EventCard(event: ConvoyEvent, onClick: () -> Unit) {
                 )
             }
 
+            // Votes row
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // Upvote button
+                IconButton(
+                    onClick = { if (!isOwnEvent) onVote(1) },
+                    enabled = !isOwnEvent,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        Icons.Default.ThumbUp,
+                        contentDescription = stringResource(R.string.vote_up),
+                        tint = if (myVote == 1) Accent else TextMuted,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+                // Score
+                Text(
+                    text = "$score",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = when {
+                        score > 0 -> Accent
+                        score < 0 -> EventTypeCompetition
+                        else -> TextSecondary
+                    },
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                // Downvote button
+                IconButton(
+                    onClick = { if (!isOwnEvent) onVote(-1) },
+                    enabled = !isOwnEvent,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        Icons.Default.ThumbDown,
+                        contentDescription = stringResource(R.string.vote_down),
+                        tint = if (myVote == -1) EventTypeCompetition else TextMuted,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+                if (isOwnEvent) {
+                    Text(
+                        text = stringResource(R.string.vote_self_hint),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextMuted,
+                        fontSize = 8.sp
+                    )
+                }
+            }
+
             // Nickname
             if (event.nickname.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(2.dp))
@@ -308,6 +390,10 @@ private fun EventCard(event: ConvoyEvent, onClick: () -> Unit) {
 private fun formatMeetingTime(timestamp: Long): String {
     val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
     return sdf.format(Date(timestamp * 1000))
+}
+
+private fun computeScore(votes: List<VoteRecord>?): Int {
+    return votes?.sumOf { it.vote } ?: 0
 }
 
 @Composable

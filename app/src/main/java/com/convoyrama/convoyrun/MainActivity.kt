@@ -78,6 +78,8 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
     val status = p2pManager?.status?.collectAsStateWithLifecycle()
     val peerCount = p2pManager?.peerCount?.collectAsStateWithLifecycle()
     val events = p2pManager?.events?.collectAsStateWithLifecycle()
+    val votes = p2pManager?.votes?.collectAsStateWithLifecycle()
+    val myVotes = p2pManager?.myVotes?.collectAsStateWithLifecycle()
 
     var selectedDay by remember {
         mutableStateOf(
@@ -94,6 +96,11 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
             .epochSeconds
     }
     val isTodaySelected = selectedDay == todayTimestamp
+
+    val myPeerId = remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        myPeerId.value = p2pManager?.getMyPeerId() ?: ""
+    }
 
     val dayEvents = remember(selectedDay, events?.value) {
         p2pManager?.getEventsForDate(selectedDay) ?: emptyList()
@@ -172,6 +179,14 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
                 todayEvents = if (isTodaySelected) todayEvents else dayEvents,
                 upcomingEvents = if (isTodaySelected) upcomingEvents else emptyList(),
                 onEventClicked = { selectedEvent = it },
+                votes = votes?.value ?: emptyMap(),
+                myVotes = myVotes?.value ?: emptyMap(),
+                myPeerId = myPeerId.value,
+                onVote = { convoyId, direction ->
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        p2pManager?.vote(convoyId, direction)
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(0.65f)
@@ -180,13 +195,18 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
     }
 
     selectedEvent?.let { event ->
+        val eventVotes = votes?.value?.get(event.id) ?: emptyList()
+        val eventScore = eventVotes.sumOf { it.vote }
+        val eventMyVote = myVotes?.value?.get(event.id)
         EventDetailView(
             event = event,
             onDismiss = { selectedEvent = null },
             onBlockAuthor = { peerId, nick ->
                 p2pManager?.blockAuthor(peerId, nick)
                 selectedEvent = null
-            }
+            },
+            score = eventScore,
+            myVote = eventMyVote
         )
     }
 }
