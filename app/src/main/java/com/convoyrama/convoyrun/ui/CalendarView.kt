@@ -172,7 +172,7 @@ private fun MonthGrid(
                                     }
                                 )
                                 .then(
-                                    if (isSelected) Modifier.shadow(4.dp, CircleShape, Accent.copy(alpha = 0.3f))
+                                    if (isSelected) Modifier.shadow(4.dp, CircleShape)
                                     else Modifier
                                 )
                                 .clickable { onDaySelected(dayTimestamp) },

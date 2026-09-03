@@ -21,7 +21,6 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerInputPass
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -91,8 +90,7 @@ fun EventListView(
                 focusedBorderColor = Accent,
                 unfocusedBorderColor = Divider,
                 cursorColor = Accent
-            ),
-            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
+            )
         )
 
         if (!hasAnyEvents) {
@@ -178,10 +176,10 @@ private fun EventCard(event: ConvoyEvent, onClick: () -> Unit) {
                 scaleY = if (isPressed) 0.99f else 1f
             }
             .clickable(
-                onClick = onClick,
-                onClickLabel = event.event.name,
-                interactionSource = remember { MutableInteractionSource() }
-            ) { isPressed = true; onClick(); isPressed = false },
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = { isPressed = true; onClick(); isPressed = false }
+            ),
         colors = CardDefaults.cardColors(containerColor = BgCard)
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
