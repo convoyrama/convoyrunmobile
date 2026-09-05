@@ -9,9 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -39,6 +37,7 @@ import java.util.*
 fun EventListView(
     todayEvents: List<ConvoyEvent>,
     upcomingEvents: List<ConvoyEvent>,
+    profiles: Map<String, ProfileRecord> = emptyMap(),
     onEventClicked: (ConvoyEvent) -> Unit,
     votes: Map<String, List<VoteRecord>> = emptyMap(),
     myVotes: Map<String, Int> = emptyMap(),
@@ -50,19 +49,21 @@ fun EventListView(
 
     val filteredToday = remember(todayEvents, searchQuery) {
         todayEvents.filter { event ->
+            val displayNick = resolveDisplayNickname(event, profiles)
             searchQuery.isEmpty() ||
-                    event.event.name.contains(searchQuery, ignoreCase = true) ||
+                    event.event.title.contains(searchQuery, ignoreCase = true) ||
                     event.event.server.contains(searchQuery, ignoreCase = true) ||
-                    event.nickname.contains(searchQuery, ignoreCase = true)
+                    displayNick.contains(searchQuery, ignoreCase = true)
         }
     }
 
     val filteredUpcoming = remember(upcomingEvents, searchQuery) {
         upcomingEvents.filter { event ->
+            val displayNick = resolveDisplayNickname(event, profiles)
             searchQuery.isEmpty() ||
-                    event.event.name.contains(searchQuery, ignoreCase = true) ||
+                    event.event.title.contains(searchQuery, ignoreCase = true) ||
                     event.event.server.contains(searchQuery, ignoreCase = true) ||
-                    event.nickname.contains(searchQuery, ignoreCase = true)
+                    displayNick.contains(searchQuery, ignoreCase = true)
         }
     }
 
@@ -129,6 +130,7 @@ fun EventListView(
                             val (vUp, vDown) = computeVoteCounts(votes[event.id])
                             EventCard(
                                 event = event,
+                                displayNickname = resolveDisplayNickname(event, profiles),
                                 onClick = { onEventClicked(event) },
                                 voteUp = vUp,
                                 voteDown = vDown,
@@ -148,6 +150,7 @@ fun EventListView(
                             val (vUp, vDown) = computeVoteCounts(votes[event.id])
                             EventCard(
                                 event = event,
+                                displayNickname = resolveDisplayNickname(event, profiles),
                                 onClick = { onEventClicked(event) },
                                 voteUp = vUp,
                                 voteDown = vDown,
@@ -191,6 +194,7 @@ private fun SectionHeader(text: String) {
 @Composable
 private fun EventCard(
     event: ConvoyEvent,
+    displayNickname: String = "",
     onClick: () -> Unit,
     voteUp: Int = 0,
     voteDown: Int = 0,
@@ -230,7 +234,7 @@ private fun EventCard(
                 verticalAlignment = Alignment.Top
             ) {
                 Text(
-                    text = event.event.name,
+                    text = event.event.title,
                     style = MaterialTheme.typography.titleSmall,
                     color = TextPrimary,
                     modifier = Modifier.weight(1f),
@@ -327,38 +331,41 @@ private fun EventCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                // Upvote button
-                IconButton(
+                TextButton(
                     onClick = { if (!isOwnEvent) onVote(1) },
                     enabled = !isOwnEvent,
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        Icons.Default.ThumbUp,
-                        contentDescription = stringResource(R.string.vote_up),
-                        tint = if (myVote == 1) Accent else TextMuted,
-                        modifier = Modifier.size(14.dp)
+                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp),
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = if (myVote == 1) Accent else TextMuted
+                    ),
+                    modifier = Modifier.height(24.dp)
+                    ) {
+                        Text(
+                        text = VoteSymbolUp,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
-                // Score
                 Text(
-                    text = "▲ $voteUp ▼ $voteDown",
+                    text = "${VoteSymbolUp} $voteUp ${VoteSymbolDown} $voteDown",
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold
                 )
-                // Downvote button
-                IconButton(
+                TextButton(
                     onClick = { if (!isOwnEvent) onVote(-1) },
                     enabled = !isOwnEvent,
-                    modifier = Modifier.size(24.dp)
+                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp),
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = if (myVote == -1) Accent else TextMuted
+                    ),
+                    modifier = Modifier.height(24.dp)
                 ) {
-                    Icon(
-                        Icons.Default.ThumbUp,
-                        contentDescription = stringResource(R.string.vote_down),
-                        tint = if (myVote == -1) EventTypeCompetition else TextMuted,
-                        modifier = Modifier.size(14.dp).graphicsLayer(rotationZ = 180f)
+                    Text(
+                        text = VoteSymbolDown,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
                 if (isOwnEvent) {
@@ -372,10 +379,10 @@ private fun EventCard(
             }
 
             // Nickname
-            if (event.nickname.isNotEmpty()) {
+            if (displayNickname.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "● ${event.nickname}",
+                    text = "● $displayNickname",
                     style = MaterialTheme.typography.bodySmall,
                     color = TextMuted,
                     maxLines = 1,
@@ -397,6 +404,15 @@ private fun computeVoteCounts(votes: List<VoteRecord>?): Pair<Int, Int> {
     val up = votes.count { it.vote == 1 }
     val down = votes.count { it.vote == -1 }
     return Pair(up, down)
+}
+
+private fun resolveDisplayNickname(event: ConvoyEvent, profiles: Map<String, ProfileRecord>): String {
+    val profileNick = profiles[event.peerId]?.data?.nickname?.trim().orEmpty()
+    return when {
+        profileNick.isNotEmpty() -> profileNick
+        event.nickname.isNotEmpty() -> event.nickname
+        else -> ""
+    }
 }
 
 @Composable

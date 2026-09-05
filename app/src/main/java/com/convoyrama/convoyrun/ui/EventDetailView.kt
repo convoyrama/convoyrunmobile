@@ -13,7 +13,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -55,6 +53,7 @@ import java.util.*
 @Composable
 fun EventDetailView(
     event: ConvoyEvent,
+    profiles: Map<String, ProfileRecord> = emptyMap(),
     onDismiss: () -> Unit,
     onBlockAuthor: (peerId: String, nick: String) -> Unit = { _, _ -> },
     voteUp: Int = 0,
@@ -65,6 +64,7 @@ fun EventDetailView(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     var showFullImage by remember { mutableStateOf(false) }
+    val displayNickname = resolveDisplayNickname(event, profiles)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -99,7 +99,7 @@ fun EventDetailView(
                 )
 
                 TextButton(
-                    onClick = { onBlockAuthor(event.peerId, event.nickname) },
+                    onClick = { onBlockAuthor(event.peerId, displayNickname) },
                     colors = ButtonDefaults.textButtonColors(contentColor = EventTypeCompetition)
                 ) {
                     Text(
@@ -129,7 +129,7 @@ fun EventDetailView(
 
             // Event name
             Text(
-                text = event.event.name,
+                text = event.event.title,
                 style = MaterialTheme.typography.headlineMedium,
                 color = TextPrimary,
                 modifier = Modifier.padding(horizontal = 16.dp)
@@ -194,23 +194,11 @@ fun EventDetailView(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(
-                    Icons.Default.ThumbUp,
-                    contentDescription = null,
-                    tint = if (myVote == 1) Accent else TextMuted,
-                    modifier = Modifier.size(18.dp)
-                )
                 Text(
-                    text = "▲ $voteUp ▼ $voteDown",
+                    text = "${VoteSymbolUp} $voteUp ${VoteSymbolDown} $voteDown",
                     style = MaterialTheme.typography.titleMedium,
                     color = TextSecondary,
                     fontWeight = FontWeight.Bold
-                )
-                Icon(
-                    Icons.Default.ThumbUp,
-                    contentDescription = null,
-                    tint = if (myVote == -1) EventTypeCompetition else TextMuted,
-                    modifier = Modifier.size(18.dp).graphicsLayer(rotationZ = 180f)
                 )
             }
 
@@ -245,10 +233,10 @@ fun EventDetailView(
             }
 
             // Languages
-            if (event.event.languages.isNotEmpty()) {
+            if (event.event.language.isNotEmpty()) {
                 DetailSection(
                     title = stringResource(R.string.detail_languages),
-                    content = event.event.languages.joinToString(", ")
+                    content = event.event.language
                 )
             }
 
@@ -268,10 +256,10 @@ fun EventDetailView(
             }
 
             // Nickname
-            if (event.nickname.isNotEmpty()) {
+            if (displayNickname.isNotEmpty()) {
                 DetailSection(
                     title = stringResource(R.string.detail_creator),
-                    content = event.nickname
+                    content = displayNickname
                 )
             }
 
@@ -361,7 +349,7 @@ private fun DetailSection(
  */
 private fun buildShareText(event: ConvoyEvent, context: android.content.Context): String {
     return buildString {
-        appendLine(event.event.name)
+        appendLine(event.event.title)
         appendLine()
         appendLine("🎮 ${event.event.game.name} — ${context.getString(event.event.mode.displayNameRes)}")
         appendLine("📅 ${formatFullMeetingTime(event.schedule.meetingTimestamp, event.schedule.ianaTimeZone)}")
@@ -380,6 +368,15 @@ private fun buildShareText(event: ConvoyEvent, context: android.content.Context)
         }
         appendLine()
         appendLine("— ConvoyRun Mobile")
+    }
+}
+
+private fun resolveDisplayNickname(event: ConvoyEvent, profiles: Map<String, ProfileRecord>): String {
+    val profileNick = profiles[event.peerId]?.data?.nickname?.trim().orEmpty()
+    return when {
+        profileNick.isNotEmpty() -> profileNick
+        event.nickname.isNotEmpty() -> event.nickname
+        else -> ""
     }
 }
 
@@ -478,4 +475,3 @@ fun FullScreenImageViewer(
         }
     }
 }
-

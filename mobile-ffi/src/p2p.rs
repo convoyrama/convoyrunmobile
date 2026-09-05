@@ -15,9 +15,9 @@ use distributed_topic_tracker::{
     PublisherConfig, BootstrapConfig, MergeConfig, BubbleMergeConfig,
 };
 
-/// Gossip topic for the convoy calendar.
+/// Gossip topic for CTES.
 /// All ConvoyRun nodes join this topic by name.
-pub const CONVOY_TOPIC: &str = "convoyrama.convoyrun.v3";
+pub const CONVOY_TOPIC: &str = "ctes-gossip/1";
 
 /// Shared passphrase for DHT discovery.
 /// All ConvoyRun clients use this to find each other automatically

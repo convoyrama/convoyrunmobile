@@ -1,6 +1,7 @@
 package com.convoyrama.convoyrun.data
 
 import com.convoyrama.convoyrun.model.VoteRecord
+import com.convoyrama.convoyrun.model.winsOver
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -12,14 +13,14 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Follows the same pattern as EventStore:
  * - Single JSON file: vote_store.json
  * - Atomic writes: write to .tmp, then rename
- * - Upsert by convoyId + voterPeerId (one vote per user per convoy)
+ * - Upsert by eventId + authorId (one current vote per author and event)
  */
 class VoteStore(private val dataDir: File) {
 
     private val storeFile = File(dataDir, "vote_store.json")
     private val tmpFile = File(dataDir, "vote_store.json.tmp")
 
-    // convoyId -> (voterPeerId -> VoteRecord)
+    // eventId -> (authorId -> VoteRecord)
     private val votes = LinkedHashMap<String, LinkedHashMap<String, VoteRecord>>()
     private val dirty = AtomicBoolean(false)
 
@@ -70,11 +71,16 @@ class VoteStore(private val dataDir: File) {
     /**
      * Insert or replace a vote (one vote per voter per convoy).
      */
-    fun upsert(vote: VoteRecord) {
+    fun upsert(vote: VoteRecord): Boolean {
         synchronized(votes) {
-            val convoyVotes = votes.getOrPut(vote.convoyId) { LinkedHashMap() }
-            convoyVotes[vote.voterPeerId] = vote
+            val eventVotes = votes.getOrPut(vote.eventId) { LinkedHashMap() }
+            val current = eventVotes[vote.authorId]
+            if (current != null && !vote.winsOver(current)) {
+                return false
+            }
+            eventVotes[vote.authorId] = vote
             dirty.set(true)
+            return true
         }
     }
 
@@ -141,9 +147,12 @@ class VoteStore(private val dataDir: File) {
         val cutoff = now - (maxAgeDays * 86400)
         synchronized(votes) {
             val before = votes.size
-            // We don't have meeting timestamps here, so we rely on ts field
+            // Votes are retained while their event may still be relayed.
             votes.entries.removeIf { (_, convoyVotes) ->
-                convoyVotes.values.all { it.ts < cutoff }
+                convoyVotes.values.all {
+                    runCatching { kotlinx.datetime.Instant.parse(it.updatedAt).epochSeconds < cutoff }
+                        .getOrDefault(false)
+                }
             }
             if (votes.size != before) {
                 dirty.set(true)

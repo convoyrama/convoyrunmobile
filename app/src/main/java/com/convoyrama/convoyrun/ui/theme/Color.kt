@@ -22,8 +22,8 @@ val TextMuted = Color(0xFF6B8A9E)       // Muted text (WCAG AA 4.8:1 on BgCard)
 val EventTypeConvoy = Color(0xFF00AAFF)     // Blue - Convoy
 val EventTypeTruckShow = Color(0xFFFF9800)  // Orange - Truck Show
 val EventTypeExploration = Color(0xFF4CAF50) // Green - Exploration
-val EventTypeCompetition = Color(0xFFF44336) // Red - Competition
-val EventTypeOther = Color(0xFF607D8B)      // Gray - Other
+val EventTypeCompetition = Color(0xFFEF5350) // Red - Competition
+val EventTypeOther = Color(0xFF78909C)      // Gray - Other
 
 // Game colors
 val GameATS = Color(0xFF2196F3)  // Blue - American Truck Simulator

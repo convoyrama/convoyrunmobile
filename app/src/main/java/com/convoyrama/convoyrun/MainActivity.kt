@@ -82,6 +82,9 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
     val events = p2pManager?.events?.collectAsStateWithLifecycle()
     val votes = p2pManager?.votes?.collectAsStateWithLifecycle()
     val myVotes = p2pManager?.myVotes?.collectAsStateWithLifecycle()
+    val profiles = p2pManager?.profiles?.collectAsStateWithLifecycle()
+    val blockedAuthors = prefsManager?.blockedAuthors?.collectAsStateWithLifecycle()
+    val filteredLanguages = prefsManager?.filteredLanguages?.collectAsStateWithLifecycle()
 
     var selectedDay by remember {
         mutableStateOf(
@@ -104,13 +107,13 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
         myPeerId.value = p2pManager?.getMyPeerId() ?: ""
     }
 
-    val dayEvents = remember(selectedDay, events?.value) {
+    val dayEvents = remember(selectedDay, events?.value, blockedAuthors?.value, filteredLanguages?.value) {
         p2pManager?.getEventsForDate(selectedDay) ?: emptyList()
     }
-    val todayEvents = remember(events?.value) {
+    val todayEvents = remember(events?.value, blockedAuthors?.value, filteredLanguages?.value) {
         p2pManager?.getEventsForDate(todayTimestamp) ?: emptyList()
     }
-    val upcomingEvents = remember(events?.value) {
+    val upcomingEvents = remember(events?.value, blockedAuthors?.value, filteredLanguages?.value) {
         p2pManager?.getUpcomingEvents(7) ?: emptyList()
     }
 
@@ -167,7 +170,7 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
                 .windowInsetsPadding(WindowInsets.navigationBars)
         ) {
             CalendarView(
-                events = events?.value ?: emptyList(),
+                events = p2pManager?.getAllEvents() ?: emptyList(),
                 onDaySelected = { selectedDay = it },
                 selectedDay = selectedDay,
                 modifier = Modifier
@@ -180,6 +183,7 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
             EventListView(
                 todayEvents = if (isTodaySelected) todayEvents else dayEvents,
                 upcomingEvents = if (isTodaySelected) upcomingEvents else emptyList(),
+                profiles = profiles?.value ?: emptyMap(),
                 onEventClicked = { selectedEvent = it },
                 votes = votes?.value ?: emptyMap(),
                 myVotes = myVotes?.value ?: emptyMap(),
@@ -203,6 +207,7 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
         val eventMyVote = myVotes?.value?.get(event.id)
         EventDetailView(
             event = event,
+            profiles = profiles?.value ?: emptyMap(),
             onDismiss = { selectedEvent = null },
             onBlockAuthor = { peerId, nick ->
                 p2pManager?.blockAuthor(peerId, nick)

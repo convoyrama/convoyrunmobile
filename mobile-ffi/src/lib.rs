@@ -190,7 +190,8 @@ impl GossipMessageWrapper {
         match &self.inner {
             gossip::GossipMessage::Convoy { .. } => "convoy".to_string(),
             gossip::GossipMessage::Vote { .. } => "vote".to_string(),
-            gossip::GossipMessage::DeleteConvoy { .. } => "delete_convoy".to_string(),
+            gossip::GossipMessage::Profile { .. } => "profile".to_string(),
+            gossip::GossipMessage::Tombstone { .. } => "tombstone".to_string(),
             gossip::GossipMessage::Channel { .. } => "channel".to_string(),
             gossip::GossipMessage::Blacklist { .. } => "blacklist".to_string(),
             gossip::GossipMessage::Trustlist { .. } => "trustlist".to_string(),
@@ -213,16 +214,22 @@ impl GossipMessageWrapper {
         }
     }
 
-    /// Get the delete convoy info (only for "delete_convoy" type messages)
-    pub fn delete_convoy_info(&self) -> Option<DeleteConvoyInfo> {
+    pub fn profile_data(&self) -> Option<String> {
+        match &self.inner { gossip::GossipMessage::Profile { data } => Some(data.clone()), _ => None }
+    }
+
+    /// Get the tombstone info (only for "tombstone" type messages)
+    pub fn tombstone_info(&self) -> Option<TombstoneInfo> {
         match &self.inner {
-            gossip::GossipMessage::DeleteConvoy {
+            gossip::GossipMessage::Tombstone {
                 convoy_id,
                 peer_id,
+                revision,
                 signature,
-            } => Some(DeleteConvoyInfo {
+            } => Some(TombstoneInfo {
                 convoy_id: convoy_id.clone(),
                 peer_id: peer_id.clone(),
+                revision: *revision,
                 signature: signature.clone(),
             }),
             _ => None,
@@ -241,8 +248,14 @@ pub fn verify_convoy_signature(convoy_json: String) -> bool {
 /// Reads the secret key from `{data_dir}/node_identity.key`, creates a VoteRecord,
 /// signs it with ed25519, and returns the complete JSON string.
 #[uniffi::export]
-pub fn sign_vote(data_dir: String, convoy_id: String, vote: i32) -> Result<String, P2pError> {
-    gossip::sign_vote(&data_dir, convoy_id, vote)
+pub fn sign_vote(
+    data_dir: String,
+    event_id: String,
+    vote: i32,
+    revision: u64,
+    created_at: Option<String>,
+) -> Result<String, P2pError> {
+    gossip::sign_vote(&data_dir, event_id, vote, revision, created_at)
         .map_err(|e| P2pError::InvalidData(e))
 }
 
@@ -253,6 +266,22 @@ pub fn verify_vote_signature(vote_json: String) -> bool {
     gossip::verify_vote_signature(&vote_json)
 }
 
+#[uniffi::export]
+pub fn sign_profile(
+    data_dir: String,
+    nickname: String,
+    revision: u64,
+    created_at: Option<String>,
+) -> Result<String, P2pError> {
+    gossip::sign_profile(&data_dir, nickname, revision, created_at)
+        .map_err(P2pError::InvalidData)
+}
+
+#[uniffi::export]
+pub fn verify_profile_signature(profile_json: String) -> bool {
+    gossip::verify_profile_signature(&profile_json)
+}
+
 /// Verify the ed25519 signature of a blacklist record JSON.
 /// Returns true if the signature is valid.
 #[uniffi::export]
@@ -261,18 +290,17 @@ pub fn verify_blacklist_signature(blacklist_json: String) -> bool {
 }
 
 /// Verify the ed25519 signature of a delete convoy message.
-/// The signed message format is "{convoy_id}:{peer_id}".
-/// Returns true if the signature is valid for the given peer's public key.
 #[uniffi::export]
-pub fn verify_delete_signature(peer_id: String, convoy_id: String, signature: String) -> bool {
-    gossip::verify_delete_signature(&peer_id, &convoy_id, &signature)
+pub fn verify_delete_signature(peer_id: String, convoy_id: String, revision: u64, signature: String) -> bool {
+    gossip::verify_delete_signature(&peer_id, &convoy_id, revision, &signature)
 }
 
-/// Delete convoy info for UniFFI
+/// Tombstone info for UniFFI
 #[derive(uniffi::Record)]
-pub struct DeleteConvoyInfo {
+pub struct TombstoneInfo {
     pub convoy_id: String,
     pub peer_id: String,
+    pub revision: u64,
     pub signature: String,
 }
 

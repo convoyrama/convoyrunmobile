@@ -17,6 +17,9 @@ class PreferencesManager(context: Context) {
     private val _filteredLanguages = MutableStateFlow<Set<String>>(emptySet())
     val filteredLanguages: StateFlow<Set<String>> = _filteredLanguages.asStateFlow()
 
+    private val _nickname = MutableStateFlow(prefs.getString("nickname", "") ?: "")
+    val nickname: StateFlow<String> = _nickname.asStateFlow()
+
     init {
         loadBlockedAuthors()
         loadFilteredLanguages()
@@ -37,6 +40,14 @@ class PreferencesManager(context: Context) {
         editor.apply()
     }
 
+    fun saveNickname(value: String): Boolean {
+        val nickname = value.trim()
+        if (nickname.isEmpty() || nickname.length > 32) return false
+        if (!prefs.edit().putString("nickname", nickname).commit()) return false
+        _nickname.value = nickname
+        return true
+    }
+
     // --- Language Filter ---
 
     private fun loadFilteredLanguages() {
@@ -50,15 +61,12 @@ class PreferencesManager(context: Context) {
 
     fun isLanguageFiltered(language: String): Boolean {
         val filtered = _filteredLanguages.value
-        if (filtered.isEmpty()) return true
-        return filtered.contains(language)
+        if (filtered.isEmpty()) return false
+        return !filtered.contains(language)
     }
 
     fun matchesLanguageFilter(eventLanguages: List<String>): Boolean {
-        val filtered = _filteredLanguages.value
-        if (filtered.isEmpty()) return true
-        if (eventLanguages.isEmpty()) return true
-        return eventLanguages.any { filtered.contains(it) }
+        return matchesLanguageFilter(_filteredLanguages.value, eventLanguages)
     }
 
     // --- Blocked Authors ---

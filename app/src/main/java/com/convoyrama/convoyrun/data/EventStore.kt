@@ -69,10 +69,15 @@ class EventStore(private val dataDir: File) {
     /**
      * Insert or replace an event by its convoy ID.
      */
-    fun upsert(event: ConvoyEvent) {
+    fun upsert(event: ConvoyEvent): Boolean {
         synchronized(events) {
+            val current = events[event.id]
+            if (current != null && !event.winsOver(current)) {
+                return false
+            }
             events[event.id] = event
             dirty.set(true)
+            return true
         }
     }
 

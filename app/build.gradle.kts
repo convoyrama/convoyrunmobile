@@ -25,8 +25,8 @@ android {
         applicationId = "com.convoyrama.convoyrun"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
-        versionName = "0.1.5"
+        versionCode = 10
+        versionName = "0.5.0"
     }
 
     buildTypes {
@@ -89,4 +89,5 @@ dependencies {
 
     // Rust FFI (local project)
     implementation(project(":mobile-ffi"))
+    testImplementation("junit:junit:4.13.2")
 }

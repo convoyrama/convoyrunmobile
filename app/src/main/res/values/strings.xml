@@ -44,6 +44,9 @@
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
+    <string name="settings_nickname_group">Public identity</string>
+    <string name="settings_nickname_label">Nickname</string>
+    <string name="settings_nickname_error">Could not save nickname</string>
     <string name="settings_back">Back</string>
     <string name="settings_lang_group">App Language</string>
     <string name="settings_lang_label">Language</string>

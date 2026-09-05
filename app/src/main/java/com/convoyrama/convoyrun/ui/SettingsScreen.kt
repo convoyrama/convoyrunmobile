@@ -34,10 +34,12 @@ fun SettingsScreen(
 ) {
     val blockedAuthors by prefsManager.blockedAuthors.collectAsState()
     val filteredLanguages by prefsManager.filteredLanguages.collectAsState()
-    val allEvents = remember { p2pManager.getAllEvents() }
+    val allEvents = p2pManager.getAllEvents()
 
     var currentLang by remember { mutableStateOf(prefsManager.getAppLanguage()) }
     var selectedLangs by remember { mutableStateOf(filteredLanguages) }
+    var nickname by remember { mutableStateOf(prefsManager.nickname.value) }
+    var nicknameError by remember { mutableStateOf(false) }
 
     // UI languages: only 3 (es, en, pt)
     val uiLanguages = listOf("es", "en", "pt")
@@ -59,7 +61,7 @@ fun SettingsScreen(
 
     val langCounts = remember(allEvents) {
         eventLanguages.associateWith { lang ->
-            allEvents.count { it.event.languages.contains(lang) }
+            allEvents.count { it.event.language == lang }
         }
     }
 
@@ -96,6 +98,33 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item { Spacer(Modifier.height(8.dp)) }
+
+            item {
+                GroupLabel(stringResource(R.string.settings_nickname_group))
+            }
+            item {
+                Card(colors = CardDefaults.cardColors(containerColor = BgCard)) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        OutlinedTextField(
+                            value = nickname,
+                            onValueChange = { nickname = it.take(32); nicknameError = false },
+                            singleLine = true,
+                            label = { Text(stringResource(R.string.settings_nickname_label)) },
+                            supportingText = if (nicknameError) {
+                                { Text(stringResource(R.string.settings_nickname_error)) }
+                            } else null,
+                            isError = nicknameError,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Button(onClick = {
+                            nicknameError = !p2pManager.setNickname(nickname)
+                        }) {
+                            Text(stringResource(R.string.settings_nickname_save))
+                        }
+                    }
+                }
+            }
 
             // --- App Language (UI: only 3 languages) ---
             item {
