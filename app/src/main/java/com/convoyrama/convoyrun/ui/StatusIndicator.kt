@@ -16,6 +16,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.convoyrama.convoyrun.R
 import com.convoyrama.convoyrun.p2p.P2pManager
+import com.convoyrama.convoyrun.ui.theme.StatusOffline
+import com.convoyrama.convoyrun.ui.theme.StatusOnline
+import com.convoyrama.convoyrun.ui.theme.StatusSearching
 
 /**
  * Status indicator component
