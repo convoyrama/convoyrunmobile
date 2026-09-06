@@ -3,7 +3,9 @@ package com.convoyrama.convoyrun.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.animation.animateContentSize
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,8 +15,10 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.convoyrama.convoyrun.R
 import com.convoyrama.convoyrun.model.ConvoyEvent
 import com.convoyrama.convoyrun.ui.theme.*
 import kotlinx.datetime.*
@@ -26,6 +30,8 @@ fun CalendarView(
     events: List<ConvoyEvent>,
     onDaySelected: (Long) -> Unit,
     selectedDay: Long?,
+    expanded: Boolean,
+    onToggleExpanded: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
@@ -40,85 +46,185 @@ fun CalendarView(
         }
     }
 
-    Column(modifier = modifier.padding(horizontal = 6.dp, vertical = 4.dp)) {
-        // Month navigation header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextButton(
-                onClick = {
-                    if (currentMonth == Month.JANUARY) {
-                        currentMonth = Month.DECEMBER
-                        currentYear -= 1
-                    } else {
-                        currentMonth = Month.entries[currentMonth.ordinal - 1]
-                    }
-                },
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                modifier = Modifier.height(28.dp)
-            ) {
-                Text("‹", color = TextSecondary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            }
+    val selectedEventCount = selectedDay?.let { eventsByDay[it]?.size ?: 0 } ?: 0
+    val selectedDateLabel = selectedDay?.let {
+        val instant = Instant.fromEpochSeconds(it)
+        val localDate = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
+        "${localDate.dayOfMonth} ${localDate.month.name.lowercase().replaceFirstChar { c -> c.uppercase() }}"
+    } ?: ""
 
-            Text(
-                text = "${currentMonth.name.lowercase().replaceFirstChar { it.uppercase() }} $currentYear",
-                style = MaterialTheme.typography.labelMedium,
-                color = TextPrimary,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            TextButton(
-                onClick = {
-                    if (currentMonth == Month.DECEMBER) {
-                        currentMonth = Month.JANUARY
-                        currentYear += 1
-                    } else {
-                        currentMonth = Month.entries[currentMonth.ordinal + 1]
-                    }
-                },
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                modifier = Modifier.height(28.dp)
-            ) {
-                Text("›", color = TextSecondary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(2.dp))
-
-        // Day of week headers
-        Row(
+    Column(
+        modifier = modifier
+            .padding(horizontal = 6.dp, vertical = 4.dp)
+            .animateContentSize()
+    ) {
+        Surface(
+            color = BgCard,
+            shape = RoundedCornerShape(14.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            val locale = JavaLocale.getDefault()
-            listOf(
-                java.time.DayOfWeek.MONDAY, java.time.DayOfWeek.TUESDAY,
-                java.time.DayOfWeek.WEDNESDAY, java.time.DayOfWeek.THURSDAY,
-                java.time.DayOfWeek.FRIDAY, java.time.DayOfWeek.SATURDAY,
-                java.time.DayOfWeek.SUNDAY
-            ).forEach { dayOfWeek ->
-                Text(
-                    text = dayOfWeek.getDisplayName(TextStyle.SHORT, locale).take(1).uppercase(locale),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(1f),
-                    fontSize = 9.sp
-                )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onToggleExpanded() }
+                    .padding(horizontal = 10.dp, vertical = 8.dp)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(width = 34.dp, height = 4.dp)
+                            .clip(CircleShape)
+                            .background(TextMuted.copy(alpha = 0.55f))
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "${currentMonth.name.lowercase().replaceFirstChar { it.uppercase() }} $currentYear",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = if (expanded) {
+                                stringResource(R.string.calendar_collapse_hint)
+                            } else {
+                                stringResource(R.string.calendar_expand_hint)
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextMuted,
+                            maxLines = 1
+                        )
+                    }
+
+                    TextButton(
+                        onClick = onToggleExpanded,
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                        modifier = Modifier.height(28.dp)
+                    ) {
+                        Text(
+                            text = if (expanded) stringResource(R.string.calendar_collapse) else stringResource(R.string.calendar_expand),
+                            color = Accent,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                if (!expanded) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = if (selectedDay != null) {
+                            stringResource(
+                                R.string.calendar_collapsed_selected,
+                                selectedDateLabel,
+                                selectedEventCount
+                            )
+                        } else {
+                            stringResource(R.string.calendar_collapsed_no_selection)
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary,
+                        maxLines = 2
+                    )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(2.dp))
+        if (expanded) {
+            Spacer(modifier = Modifier.height(8.dp))
 
-        // Calendar grid
-        MonthGrid(
-            year = currentYear,
-            month = currentMonth,
-            eventsByDay = eventsByDay,
-            selectedDay = selectedDay,
-            onDaySelected = onDaySelected
-        )
+            // Month navigation header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(
+                    onClick = {
+                        if (currentMonth == Month.JANUARY) {
+                            currentMonth = Month.DECEMBER
+                            currentYear -= 1
+                        } else {
+                            currentMonth = Month.entries[currentMonth.ordinal - 1]
+                        }
+                    },
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                    modifier = Modifier.height(28.dp)
+                ) {
+                    Text("‹", color = TextSecondary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
+
+                Text(
+                    text = "${currentMonth.name.lowercase().replaceFirstChar { it.uppercase() }} $currentYear",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextPrimary,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                TextButton(
+                    onClick = {
+                        if (currentMonth == Month.DECEMBER) {
+                            currentMonth = Month.JANUARY
+                            currentYear += 1
+                        } else {
+                            currentMonth = Month.entries[currentMonth.ordinal + 1]
+                        }
+                    },
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                    modifier = Modifier.height(28.dp)
+                ) {
+                    Text("›", color = TextSecondary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            // Day of week headers
+            Row(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                val locale = JavaLocale.getDefault()
+                listOf(
+                    java.time.DayOfWeek.MONDAY, java.time.DayOfWeek.TUESDAY,
+                    java.time.DayOfWeek.WEDNESDAY, java.time.DayOfWeek.THURSDAY,
+                    java.time.DayOfWeek.FRIDAY, java.time.DayOfWeek.SATURDAY,
+                    java.time.DayOfWeek.SUNDAY
+                ).forEach { dayOfWeek ->
+                    Text(
+                        text = dayOfWeek.getDisplayName(TextStyle.SHORT, locale).take(1).uppercase(locale),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextMuted,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f),
+                        fontSize = 9.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            // Calendar grid
+            MonthGrid(
+                year = currentYear,
+                month = currentMonth,
+                eventsByDay = eventsByDay,
+                selectedDay = selectedDay,
+                onDaySelected = onDaySelected
+            )
+        }
+        if (!expanded) {
+            Spacer(modifier = Modifier.height(4.dp))
+        }
     }
 }
 

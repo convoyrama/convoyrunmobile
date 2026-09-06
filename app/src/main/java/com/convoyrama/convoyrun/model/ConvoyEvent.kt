@@ -3,9 +3,15 @@ package com.convoyrama.convoyrun.model
 import androidx.annotation.StringRes
 import com.convoyrama.convoyrun.R
 import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.*
 import kotlinx.datetime.Instant
 
@@ -140,9 +146,32 @@ enum class EventType {
 /**
  * Games (matches desktop Game enum)
  */
-@Serializable
+@Serializable(with = GameSerializer::class)
 enum class Game {
     ATS, ETS2, Other
+}
+
+object GameSerializer : KSerializer<Game> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("Game", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: Game) {
+        val serialized = when (value) {
+            Game.ATS -> "ats"
+            Game.ETS2 -> "ets2"
+            Game.Other -> "other"
+        }
+        encoder.encodeString(serialized)
+    }
+
+    override fun deserialize(decoder: Decoder): Game {
+        return when (decoder.decodeString().trim().lowercase()) {
+            "ats" -> Game.ATS
+            "ets2" -> Game.ETS2
+            "other" -> Game.Other
+            else -> Game.Other
+        }
+    }
 }
 
 /**

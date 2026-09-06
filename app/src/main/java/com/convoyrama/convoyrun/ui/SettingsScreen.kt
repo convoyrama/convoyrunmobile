@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +41,7 @@ fun SettingsScreen(
     var selectedLangs by remember { mutableStateOf(filteredLanguages) }
     var nickname by remember { mutableStateOf(prefsManager.nickname.value) }
     var nicknameError by remember { mutableStateOf(false) }
+    var nicknameSaved by rememberSaveable { mutableStateOf(false) }
 
     // UI languages: only 3 (es, en, pt)
     val uiLanguages = listOf("es", "en", "pt")
@@ -94,7 +96,8 @@ fun SettingsScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp)
+                .navigationBarsPadding(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item { Spacer(Modifier.height(8.dp)) }
@@ -107,20 +110,34 @@ fun SettingsScreen(
                     Column(modifier = Modifier.padding(14.dp)) {
                         OutlinedTextField(
                             value = nickname,
-                            onValueChange = { nickname = it.take(32); nicknameError = false },
+                            onValueChange = {
+                                nickname = it.take(32)
+                                nicknameError = false
+                                nicknameSaved = false
+                            },
                             singleLine = true,
                             label = { Text(stringResource(R.string.settings_nickname_label)) },
                             supportingText = if (nicknameError) {
                                 { Text(stringResource(R.string.settings_nickname_error)) }
+                            } else if (nicknameSaved) {
+                                { Text(stringResource(R.string.settings_nickname_saved_desc), color = StatusOnline) }
                             } else null,
                             isError = nicknameError,
                             modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(Modifier.height(8.dp))
                         Button(onClick = {
-                            nicknameError = !p2pManager.setNickname(nickname)
+                            val ok = p2pManager.setNickname(nickname)
+                            nicknameError = !ok
+                            nicknameSaved = ok
                         }) {
-                            Text(stringResource(R.string.settings_nickname_save))
+                            Text(
+                                text = if (nicknameSaved) {
+                                    stringResource(R.string.settings_nickname_saved)
+                                } else {
+                                    stringResource(R.string.settings_nickname_save)
+                                }
+                            )
                         }
                     }
                 }
@@ -290,6 +307,7 @@ fun SettingsScreen(
             }
 
             item { Spacer(Modifier.height(16.dp)) }
+            item { Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars)) }
         }
     }
 }

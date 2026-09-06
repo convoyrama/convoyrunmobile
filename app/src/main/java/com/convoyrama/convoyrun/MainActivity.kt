@@ -3,6 +3,7 @@ package com.convoyrama.convoyrun
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -66,6 +68,7 @@ class MainActivity : AppCompatActivity() {
 @Composable
 fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
     var showSettings by remember { mutableStateOf(false) }
+    var calendarExpanded by rememberSaveable { mutableStateOf(true) }
     val coroutineScope = rememberCoroutineScope()
 
     if (showSettings && p2pManager != null && prefsManager != null) {
@@ -116,6 +119,14 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
     val upcomingEvents = remember(events?.value, blockedAuthors?.value, filteredLanguages?.value) {
         p2pManager?.getUpcomingEvents(7) ?: emptyList()
     }
+    val calendarWeight by animateFloatAsState(
+        targetValue = if (calendarExpanded) 0.35f else 0.16f,
+        label = "calendarWeight"
+    )
+    val listWeight by animateFloatAsState(
+        targetValue = if (calendarExpanded) 0.65f else 0.84f,
+        label = "listWeight"
+    )
 
     Scaffold(
         topBar = {
@@ -173,9 +184,11 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
                 events = p2pManager?.getAllEvents() ?: emptyList(),
                 onDaySelected = { selectedDay = it },
                 selectedDay = selectedDay,
+                expanded = calendarExpanded,
+                onToggleExpanded = { calendarExpanded = !calendarExpanded },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.35f)
+                    .weight(calendarWeight)
             )
 
             HorizontalDivider(color = Divider, thickness = 1.dp)
@@ -195,7 +208,7 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.65f)
+                    .weight(listWeight)
             )
         }
     }

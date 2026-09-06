@@ -42,6 +42,12 @@
     <!-- Settings -->
     <string name="settings_title">Configurações</string>
     <string name="settings_back">Voltar</string>
+    <string name="settings_nickname_group">Identidade pública</string>
+    <string name="settings_nickname_label">Apelido</string>
+    <string name="settings_nickname_error">Não foi possível salvar o apelido</string>
+    <string name="settings_nickname_save">Salvar</string>
+    <string name="settings_nickname_saved">Salvo</string>
+    <string name="settings_nickname_saved_desc">Apelido salvo com sucesso</string>
     <string name="settings_lang_group">Idioma do App</string>
     <string name="settings_lang_label">Idioma</string>
     <string name="settings_lang_sub">Substituir idioma do sistema</string>
@@ -72,4 +78,12 @@
     <string name="day_fri">S</string>
     <string name="day_sat">S</string>
     <string name="day_sun">D</string>
+
+    <!-- Calendar collapse -->
+    <string name="calendar_collapse_hint">Arraste ou toque para recolher o calendário</string>
+    <string name="calendar_expand_hint">Arraste ou toque para expandir o calendário</string>
+    <string name="calendar_collapse">Recolher</string>
+    <string name="calendar_expand">Expandir</string>
+    <string name="calendar_collapsed_selected">Selecionado: %1$s. %2$d eventos.</string>
+    <string name="calendar_collapsed_no_selection">Toque em um dia para focar na lista de eventos.</string>
 </resources>
