@@ -58,6 +58,13 @@
     <string name="settings_blocked_group">Blocked Authors</string>
     <string name="settings_blocked_empty">No blocked authors</string>
     <string name="settings_unblock">Unblock</string>
+    <string name="settings_reset_group">Local data</string>
+    <string name="settings_reset_local_data">Reset local data</string>
+    <string name="settings_reset_local_data_hint">Delete the local profile, caches, and P2P identity. The app will start fresh.</string>
+    <string name="settings_reset_confirm_title">Reset local data?</string>
+    <string name="settings_reset_confirm_body">This removes the local nickname, blocked authors, filters, cached events, votes, profiles, and the current P2P identity from this device.</string>
+    <string name="settings_reset_confirm_action">Reset</string>
+    <string name="settings_reset_cancel">Cancel</string>
 
     <!-- Event types -->
     <string name="type_convoy">Convoy</string>

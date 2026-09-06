@@ -33,9 +33,9 @@ fun StatusIndicator(
 ) {
     val dotColor by animateColorAsState(
         targetValue = when (status) {
-            P2pManager.Status.ONLINE -> Color(0xFF4CAF50)    // Green
-            P2pManager.Status.SEARCHING -> Color(0xFFFFC107) // Yellow
-            P2pManager.Status.OFFLINE -> Color(0xFF757575)   // Gray
+            P2pManager.Status.ONLINE -> StatusOnline
+            P2pManager.Status.SEARCHING -> StatusSearching
+            P2pManager.Status.OFFLINE -> StatusOffline
         },
         animationSpec = tween(durationMillis = 300),
         label = "statusDotColor"

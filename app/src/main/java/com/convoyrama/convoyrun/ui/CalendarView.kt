@@ -19,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.convoyrama.convoyrun.R
-import com.convoyrama.convoyrun.model.ConvoyEvent
+import com.convoyrama.convoyrun.model.EventDocument
 import com.convoyrama.convoyrun.ui.theme.*
 import kotlinx.datetime.*
 import java.time.format.TextStyle
@@ -27,7 +27,7 @@ import java.util.Locale as JavaLocale
 
 @Composable
 fun CalendarView(
-    events: List<ConvoyEvent>,
+    events: List<EventDocument>,
     onDaySelected: (Long) -> Unit,
     selectedDay: Long?,
     expanded: Boolean,
@@ -232,7 +232,7 @@ fun CalendarView(
 private fun MonthGrid(
     year: Int,
     month: Month,
-    eventsByDay: Map<Long, List<ConvoyEvent>>,
+    eventsByDay: Map<Long, List<EventDocument>>,
     selectedDay: Long?,
     onDaySelected: (Long) -> Unit
 ) {

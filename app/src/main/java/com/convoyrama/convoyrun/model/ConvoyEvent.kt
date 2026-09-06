@@ -16,10 +16,10 @@ import kotlinx.serialization.json.*
 import kotlinx.datetime.Instant
 
 /**
- * Convoy event data model (matches desktop ConvoyRecord)
+ * CTES event document model (matches desktop EventDocument).
  */
 @Serializable
-data class ConvoyEvent(
+data class EventDocument(
     @SerialName("specVersion")
     val specVersion: String = "1.0",
     val kind: String = "event",
@@ -234,11 +234,11 @@ fun parseGossipMessage(json: String): GossipMessage? {
 }
 
 /**
- * Parse a ConvoyEvent from JSON string
+ * Parse an EventDocument from JSON string.
  */
 private val lenientJson = Json { ignoreUnknownKeys = true }
 
-private fun normalizeConvoyEvent(event: ConvoyEvent): ConvoyEvent {
+private fun normalizeEventDocument(event: EventDocument): EventDocument {
     val publishedAt = runCatching { Instant.parse(event.createdAt).epochSeconds }.getOrDefault(0L)
     val schedule = event.event.schedule.copy(
         meetingTimestamp = runCatching { Instant.parse(event.event.schedule.meetingAt).epochSeconds }.getOrDefault(0L),
@@ -264,9 +264,9 @@ private fun normalizeConvoyEvent(event: ConvoyEvent): ConvoyEvent {
     )
 }
 
-fun parseConvoyEvent(json: String): ConvoyEvent? {
+fun parseEventDocument(json: String): EventDocument? {
     return try {
-        lenientJson.decodeFromString<ConvoyEvent>(json).let(::normalizeConvoyEvent)
+        lenientJson.decodeFromString<EventDocument>(json).let(::normalizeEventDocument)
     } catch (_: Exception) {
         null
     }
@@ -330,7 +330,7 @@ fun ProfileRecord.winsOver(current: ProfileRecord): Boolean =
     revision > current.revision ||
         (revision == current.revision && signature > current.signature)
 
-fun ConvoyEvent.winsOver(current: ConvoyEvent): Boolean =
+fun EventDocument.winsOver(current: EventDocument): Boolean =
     revision > current.revision ||
         (revision == current.revision && deleted != current.deleted && deleted) ||
         (revision == current.revision && deleted == current.deleted && signature > current.signature)

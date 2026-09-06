@@ -1,6 +1,6 @@
 package com.convoyrama.convoyrun.data
 
-import com.convoyrama.convoyrun.model.ConvoyEvent
+import com.convoyrama.convoyrun.model.EventDocument
 
 fun matchesLanguageFilter(filteredLanguages: Set<String>, eventLanguages: List<String>): Boolean {
     if (filteredLanguages.isEmpty()) return true
@@ -9,7 +9,7 @@ fun matchesLanguageFilter(filteredLanguages: Set<String>, eventLanguages: List<S
 }
 
 fun shouldDisplayEvent(
-    event: ConvoyEvent,
+    event: EventDocument,
     blockedAuthors: Set<String>,
     filteredLanguages: Set<String>
 ): Boolean {
@@ -18,7 +18,7 @@ fun shouldDisplayEvent(
     return matchesLanguageFilter(filteredLanguages, listOf(event.event.language).filter { it.isNotBlank() })
 }
 
-fun isValidIncomingEvent(event: ConvoyEvent, nowEpochSeconds: Long): Boolean {
+fun isValidIncomingEvent(event: EventDocument, nowEpochSeconds: Long): Boolean {
     if (event.nickname.length > 64) return false
     if (event.event.title.length > 200) return false
     if (event.event.description.length > 5000) return false

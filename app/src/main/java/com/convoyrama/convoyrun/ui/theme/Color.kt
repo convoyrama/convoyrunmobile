@@ -10,13 +10,12 @@ val AccentLight = Color(0xFF33BBFF)     // Lighter accent for highlights
 // Background colors
 val BgPrimary = Color(0xFF1A1A2E)       // --bg-primary
 val BgSecondary = Color(0xFF16213E)     // --bg-secondary
-val BgCard = Color(0xFF1E2A4A)          // Card backgrounds
+val BgCard = Color(0xFF252525)          // Surface backgrounds
 
 // Text colors
-val TextPrimary = Color(0xFFE0E0E0)     // Main text
-val TextSecondary = Color(0xFF99AABB)   // Secondary text (WCAG AA 5.3:1 on BgPrimary)
-val TextMuted = Color(0xFF6B8A9E)       // Muted text (WCAG AA 4.8:1 on BgCard)
-
+val TextPrimary = Color(0xFFFFFFFF)     // Main text
+val TextSecondary = Color(0xFFAAAAAA)   // Secondary text
+val TextMuted = Color(0xFF666666)       // Muted text
 
 // Event type colors
 val EventTypeConvoy = Color(0xFF00AAFF)     // Blue - Convoy
@@ -30,5 +29,10 @@ val GameATS = Color(0xFF2196F3)  // Blue - American Truck Simulator
 val GameETS2 = Color(0xFFFF9800) // Orange - Euro Truck Simulator 2
 
 // Divider/Border
-val Divider = Color(0xFF2A3A5A)
-val Border = Color(0xFF3A4A6A)
+val Divider = Color(0xFF444444)
+val Border = Color(0xFF444444)
+
+// Connection states
+val StatusOnline = Color(0xFF4ADE80)
+val StatusSearching = Color(0xFFFACC15)
+val StatusOffline = Color(0xFF666666)

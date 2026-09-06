@@ -62,8 +62,8 @@ class P2pManager(
     private val _peerCount = MutableStateFlow(0)
     val peerCount: StateFlow<Int> = _peerCount.asStateFlow()
 
-    private val _events = MutableStateFlow<List<ConvoyEvent>>(emptyList())
-    val events: StateFlow<List<ConvoyEvent>> = _events.asStateFlow()
+    private val _events = MutableStateFlow<List<EventDocument>>(emptyList())
+    val events: StateFlow<List<EventDocument>> = _events.asStateFlow()
 
     private val _votes = MutableStateFlow<Map<String, List<VoteRecord>>>(emptyMap())
     val votes: StateFlow<Map<String, List<VoteRecord>>> = _votes.asStateFlow()
@@ -253,7 +253,7 @@ class P2pManager(
                     when (message) {
                         is GossipMessage.Convoy -> {
                             // Dedup check
-                            val dedupKey = "convoy:${parseConvoyEventId(message.data)}"
+                            val dedupKey = "convoy:${parseEventDocumentId(message.data)}"
                             if (!seenMessages.add(dedupKey)) {
                                 android.util.Log.d("P2pManager", "Skipping duplicate convoy")
                                 continue
@@ -267,12 +267,12 @@ class P2pManager(
                                 continue
                             }
                             android.util.Log.d("P2pManager", "Signature OK, parsing convoy event...")
-                            val convoyEvent = parseConvoyEvent(message.data)
+                            val convoyEvent = parseEventDocument(message.data)
                             if (convoyEvent != null) {
                                 android.util.Log.i("P2pManager", "Adding convoy event: '${convoyEvent.event.title}' (id=${convoyEvent.id}, peer=${convoyEvent.peerId.take(8)})")
                                 addEvent(convoyEvent)
                             } else {
-                                android.util.Log.e("P2pManager", "Failed to parse ConvoyEvent from data")
+                                android.util.Log.e("P2pManager", "Failed to parse EventDocument from data")
                             }
                         }
                         is GossipMessage.Tombstone -> {
@@ -355,7 +355,7 @@ class P2pManager(
     /**
      * Add an event to the local cache and persist to disk.
      */
-    private fun addEvent(event: ConvoyEvent) {
+    private fun addEvent(event: EventDocument) {
         val now = kotlinx.datetime.Clock.System.now().epochSeconds
         if (!isValidIncomingEvent(event, now)) {
             android.util.Log.w("P2pManager", "Event REJECTED: invalid document or retention window '${event.event.title}'")
@@ -393,7 +393,7 @@ class P2pManager(
                 signature = existing.signature
             )
         } else {
-            ConvoyEvent(
+            EventDocument(
                 id = convoyId,
                 peerId = authorPeerId,
                 revision = revision,
@@ -557,7 +557,7 @@ class P2pManager(
     /**
      * Get events for a specific date (start of day timestamp)
      */
-    fun getEventsForDate(dayTimestamp: Long): List<ConvoyEvent> {
+    fun getEventsForDate(dayTimestamp: Long): List<EventDocument> {
         val tz = kotlinx.datetime.TimeZone.currentSystemDefault()
         val date = kotlinx.datetime.Instant.fromEpochSeconds(dayTimestamp)
             .toLocalDateTime(tz).date
@@ -573,7 +573,7 @@ class P2pManager(
     /**
      * Get upcoming events from today for the next N days (excluding today)
      */
-    fun getUpcomingEvents(days: Int = 7): List<ConvoyEvent> {
+    fun getUpcomingEvents(days: Int = 7): List<EventDocument> {
         val tz = kotlinx.datetime.TimeZone.currentSystemDefault()
         val today = kotlinx.datetime.Clock.System.todayIn(tz)
         val tomorrow = today.plus(1, kotlinx.datetime.DateTimeUnit.DAY)
@@ -586,7 +586,7 @@ class P2pManager(
         }.sortedBy { it.schedule.meetingTimestamp }
     }
 
-    fun getAllEvents(): List<ConvoyEvent> = filteredEvents()
+    fun getAllEvents(): List<EventDocument> = filteredEvents()
 
     /**
      * Get the local node's peer ID.
@@ -595,7 +595,7 @@ class P2pManager(
         return node?.peerId() ?: ""
     }
 
-    private fun filteredEvents(): List<ConvoyEvent> {
+    private fun filteredEvents(): List<EventDocument> {
         return _events.value.filter { event ->
             shouldDisplayEvent(event, prefs.blockedAuthors.value.keys, prefs.filteredLanguages.value)
         }
@@ -708,7 +708,7 @@ class P2pManager(
     /**
      * Extract convoy ID from JSON data without full parsing (for dedup).
      */
-    private fun parseConvoyEventId(data: String): String {
+    private fun parseEventDocumentId(data: String): String {
         return try {
             val json = Json.parseToJsonElement(data).jsonObject
             json["id"]?.toString()?.trim('"') ?: data.hashCode().toString()
@@ -717,7 +717,7 @@ class P2pManager(
         }
     }
 
-    private fun broadcastStoredEvent(sub: GossipSubscriptionWrapper, stored: ConvoyEvent): String {
+    private fun broadcastStoredEvent(sub: GossipSubscriptionWrapper, stored: EventDocument): String {
         return if (stored.deleted && stored.deleteSignature.isNotBlank()) {
             val signerId = stored.authorId.ifBlank { stored.peerId }
             val tombstone = buildJsonObject {
@@ -734,7 +734,7 @@ class P2pManager(
             sub.broadcast(envelope)
             envelope
         } else {
-            val innerJson = broadcastJson.encodeToString(ConvoyEvent.serializer(), stored)
+            val innerJson = broadcastJson.encodeToString(EventDocument.serializer(), stored)
             val envelope = buildCtesEnvelope(innerJson)
             sub.broadcast(envelope)
             envelope
@@ -777,6 +777,21 @@ class P2pManager(
      */
     fun destroy() {
         scope.cancel()
+    }
+
+    suspend fun resetLocalData() = withContext(Dispatchers.IO) {
+        stop()
+        prefs.clearAll()
+        _events.value = emptyList()
+        _votes.value = emptyMap()
+        _myVotes.value = emptyMap()
+        _profiles.value = emptyMap()
+        synchronized(seenMessages) {
+            seenMessages.clear()
+            seenMessagesOrder.clear()
+        }
+        File(context.filesDir, "p2p").deleteRecursively()
+        start()
     }
 
     companion object {

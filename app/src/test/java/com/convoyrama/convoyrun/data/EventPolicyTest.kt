@@ -1,6 +1,6 @@
 package com.convoyrama.convoyrun.data
 
-import com.convoyrama.convoyrun.model.ConvoyEvent
+import com.convoyrama.convoyrun.model.EventDocument
 import com.convoyrama.convoyrun.model.EventData
 import com.convoyrama.convoyrun.model.Schedule
 import org.junit.Assert.assertFalse
@@ -54,7 +54,7 @@ class EventPolicyTest {
         peerId: String,
         languages: List<String>,
         deleted: Boolean = false
-    ) = ConvoyEvent(
+    ) = EventDocument(
         id = "convoy-${peerId.takeLast(2)}-${languages.joinToString("-")}",
         peerId = peerId,
         nickname = "Driver",

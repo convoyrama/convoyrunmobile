@@ -53,7 +53,7 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventDetailView(
-    event: ConvoyEvent,
+    event: EventDocument,
     profiles: Map<String, ProfileRecord> = emptyMap(),
     onDismiss: () -> Unit,
     onBlockAuthor: (peerId: String, nick: String) -> Unit = { _, _ -> },
@@ -348,7 +348,7 @@ private fun DetailSection(
 /**
  * Build share text for event
  */
-private fun buildShareText(event: ConvoyEvent, context: android.content.Context): String {
+private fun buildShareText(event: EventDocument, context: android.content.Context): String {
     return buildString {
         appendLine(event.event.title)
         appendLine()
@@ -372,7 +372,7 @@ private fun buildShareText(event: ConvoyEvent, context: android.content.Context)
     }
 }
 
-private fun resolveDisplayNickname(event: ConvoyEvent, profiles: Map<String, ProfileRecord>): String {
+private fun resolveDisplayNickname(event: EventDocument, profiles: Map<String, ProfileRecord>): String {
     val profileNick = profiles[event.peerId]?.data?.nickname?.trim().orEmpty()
     return when {
         profileNick.isNotEmpty() -> profileNick

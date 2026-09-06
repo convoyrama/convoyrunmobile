@@ -104,4 +104,11 @@ class PreferencesManager(context: Context) {
 
     fun isBlocked(peerId: String): Boolean =
         _blockedAuthors.value.containsKey(peerId)
+
+    fun clearAll() {
+        if (!prefs.edit().clear().commit()) return
+        _blockedAuthors.value = emptyMap()
+        _filteredLanguages.value = emptySet()
+        _nickname.value = ""
+    }
 }

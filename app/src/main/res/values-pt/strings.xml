@@ -55,6 +55,13 @@
     <string name="settings_blocked_group">Autores Bloqueados</string>
     <string name="settings_blocked_empty">Nenhum autor bloqueado</string>
     <string name="settings_unblock">Desbloquear</string>
+    <string name="settings_reset_group">Dados locais</string>
+    <string name="settings_reset_local_data">Redefinir dados locais</string>
+    <string name="settings_reset_local_data_hint">Remove o perfil local, caches e a identidade P2P. O app começará do zero.</string>
+    <string name="settings_reset_confirm_title">Redefinir dados locais?</string>
+    <string name="settings_reset_confirm_body">Isso remove o apelido local, autores bloqueados, filtros, eventos em cache, votos, perfis e a identidade P2P atual deste dispositivo.</string>
+    <string name="settings_reset_confirm_action">Redefinir</string>
+    <string name="settings_reset_cancel">Cancelar</string>
 
     <!-- Event types -->
     <string name="type_convoy">Convoy</string>

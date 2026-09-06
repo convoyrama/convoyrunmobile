@@ -26,6 +26,7 @@ import com.convoyrama.convoyrun.R
 import com.convoyrama.convoyrun.data.PreferencesManager
 import com.convoyrama.convoyrun.p2p.P2pManager
 import com.convoyrama.convoyrun.ui.theme.*
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
@@ -42,6 +43,8 @@ fun SettingsScreen(
     var nickname by remember { mutableStateOf(prefsManager.nickname.value) }
     var nicknameError by remember { mutableStateOf(false) }
     var nicknameSaved by rememberSaveable { mutableStateOf(false) }
+    var showResetDialog by rememberSaveable { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     // UI languages: only 3 (es, en, pt)
     val uiLanguages = listOf("es", "en", "pt")
@@ -120,7 +123,7 @@ fun SettingsScreen(
                             supportingText = if (nicknameError) {
                                 { Text(stringResource(R.string.settings_nickname_error)) }
                             } else if (nicknameSaved) {
-                                { Text(stringResource(R.string.settings_nickname_saved_desc), color = StatusOnline) }
+                                { Text(stringResource(R.string.settings_nickname_saved_desc), color = EventTypeExploration) }
                             } else null,
                             isError = nicknameError,
                             modifier = Modifier.fillMaxWidth()
@@ -306,9 +309,68 @@ fun SettingsScreen(
                 }
             }
 
+            item {
+                GroupLabel(stringResource(R.string.settings_reset_group))
+            }
+            item {
+                Card(colors = CardDefaults.cardColors(containerColor = BgCard)) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Text(
+                            text = stringResource(R.string.settings_reset_local_data_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextMuted
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        Button(
+                            onClick = { showResetDialog = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = EventTypeCompetition)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.settings_reset_local_data),
+                                color = androidx.compose.ui.graphics.Color.White,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
+            }
+
             item { Spacer(Modifier.height(16.dp)) }
             item { Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars)) }
         }
+    }
+
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            title = { Text(stringResource(R.string.settings_reset_confirm_title)) },
+            text = { Text(stringResource(R.string.settings_reset_confirm_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showResetDialog = false
+                        coroutineScope.launch {
+                            p2pManager.resetLocalData()
+                            currentLang = null
+                            selectedLangs = emptySet()
+                            nickname = prefsManager.nickname.value
+                            nicknameError = false
+                            nicknameSaved = false
+                        }
+                    }
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_reset_confirm_action),
+                        color = EventTypeCompetition
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetDialog = false }) {
+                    Text(stringResource(R.string.settings_reset_cancel))
+                }
+            }
+        )
     }
 }
 

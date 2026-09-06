@@ -21,7 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.lifecycleScope
 import com.convoyrama.convoyrun.data.PreferencesManager
-import com.convoyrama.convoyrun.model.ConvoyEvent
+import com.convoyrama.convoyrun.model.EventDocument
 import com.convoyrama.convoyrun.p2p.P2pManager
 import com.convoyrama.convoyrun.ui.*
 import com.convoyrama.convoyrun.ui.theme.*
@@ -96,7 +96,7 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
                 .epochSeconds
         )
     }
-    var selectedEvent by remember { mutableStateOf<ConvoyEvent?>(null) }
+    var selectedEvent by remember { mutableStateOf<EventDocument?>(null) }
 
     val todayTimestamp = remember {
         Clock.System.todayIn(TimeZone.currentSystemDefault())

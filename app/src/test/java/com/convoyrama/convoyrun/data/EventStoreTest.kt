@@ -1,6 +1,6 @@
 package com.convoyrama.convoyrun.data
 
-import com.convoyrama.convoyrun.model.ConvoyEvent
+import com.convoyrama.convoyrun.model.EventDocument
 import com.convoyrama.convoyrun.model.EventData
 import com.convoyrama.convoyrun.model.Schedule
 import org.junit.Assert.assertFalse
@@ -61,7 +61,7 @@ class EventStoreTest {
         revision: Long,
         deleted: Boolean,
         signature: String
-    ) = ConvoyEvent(
+    ) = EventDocument(
         id = "convoy-test",
         peerId = "peer-a",
         revision = revision,

@@ -36,10 +36,10 @@ import java.util.*
 
 @Composable
 fun EventListView(
-    todayEvents: List<ConvoyEvent>,
-    upcomingEvents: List<ConvoyEvent>,
+    todayEvents: List<EventDocument>,
+    upcomingEvents: List<EventDocument>,
     profiles: Map<String, ProfileRecord> = emptyMap(),
-    onEventClicked: (ConvoyEvent) -> Unit,
+    onEventClicked: (EventDocument) -> Unit,
     votes: Map<String, List<VoteRecord>> = emptyMap(),
     myVotes: Map<String, Int> = emptyMap(),
     myPeerId: String = "",
@@ -194,7 +194,7 @@ private fun SectionHeader(text: String) {
 
 @Composable
 private fun EventCard(
-    event: ConvoyEvent,
+    event: EventDocument,
     displayNickname: String = "",
     onClick: () -> Unit,
     voteUp: Int = 0,
@@ -407,7 +407,7 @@ private fun computeVoteCounts(votes: List<VoteRecord>?): Pair<Int, Int> {
     return Pair(up, down)
 }
 
-private fun resolveDisplayNickname(event: ConvoyEvent, profiles: Map<String, ProfileRecord>): String {
+private fun resolveDisplayNickname(event: EventDocument, profiles: Map<String, ProfileRecord>): String {
     val profileNick = profiles[event.peerId]?.data?.nickname?.trim().orEmpty()
     return when {
         profileNick.isNotEmpty() -> profileNick

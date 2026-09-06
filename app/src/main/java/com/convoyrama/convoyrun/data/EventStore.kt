@@ -1,6 +1,6 @@
 package com.convoyrama.convoyrun.data
 
-import com.convoyrama.convoyrun.model.ConvoyEvent
+import com.convoyrama.convoyrun.model.EventDocument
 import com.convoyrama.convoyrun.model.winsOver
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -22,7 +22,7 @@ class EventStore(private val dataDir: File) {
     private val tmpFile = File(dataDir, "event_store.json.tmp")
 
     // In-memory cache keyed by convoy ID
-    private val events = LinkedHashMap<String, ConvoyEvent>()
+    private val events = LinkedHashMap<String, EventDocument>()
     private val dirty = AtomicBoolean(false)
 
     init {
@@ -33,13 +33,13 @@ class EventStore(private val dataDir: File) {
      * Load events from disk into memory.
      * Returns the loaded events. Silently returns empty on first run or corrupt file.
      */
-    fun load(): List<ConvoyEvent> {
+    fun load(): List<EventDocument> {
         synchronized(events) {
             events.clear()
             if (!storeFile.exists()) return emptyList()
             return try {
                 val json = storeFile.readText()
-                val map: Map<String, ConvoyEvent> = lenientJson.decodeFromString(json)
+                val map: Map<String, EventDocument> = lenientJson.decodeFromString(json)
                 events.putAll(map)
                 events.values.sortedBy { it.schedule.meetingTimestamp }
             } catch (e: Exception) {
@@ -70,7 +70,7 @@ class EventStore(private val dataDir: File) {
     /**
      * Insert or replace an event by its convoy ID.
      */
-    fun upsert(event: ConvoyEvent): Boolean {
+    fun upsert(event: EventDocument): Boolean {
         synchronized(events) {
             val current = events[event.id]
             if (current != null && !event.winsOver(current)) {
@@ -125,7 +125,7 @@ class EventStore(private val dataDir: File) {
      * Get all stored events, sorted by meeting timestamp.
      * Excludes events marked as deleted.
      */
-    fun getAll(): List<ConvoyEvent> {
+    fun getAll(): List<EventDocument> {
         synchronized(events) {
             return events.values.filter { !it.deleted }.sortedBy { it.schedule.meetingTimestamp }
         }
@@ -134,7 +134,7 @@ class EventStore(private val dataDir: File) {
     /**
      * Get all stored events including deleted ones (for re-broadcast).
      */
-    fun getAllIncludingDeleted(): List<ConvoyEvent> {
+    fun getAllIncludingDeleted(): List<EventDocument> {
         synchronized(events) {
             return events.values.sortedBy { it.schedule.meetingTimestamp }
         }
