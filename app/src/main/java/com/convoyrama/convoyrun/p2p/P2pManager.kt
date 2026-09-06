@@ -8,6 +8,7 @@ import com.convoyrama.convoyrun.data.shouldDisplayEvent
 import com.convoyrama.convoyrun.data.ProfileStore
 import com.convoyrama.convoyrun.data.VoteStore
 import com.convoyrama.convoyrun.model.*
+import com.convoyrama.convoyrun.model.retentionDeadline
 import uniffi.convoyrun_mobile_ffi.P2pNodeWrapper
 import uniffi.convoyrun_mobile_ffi.GossipSubscriptionWrapper
 import uniffi.convoyrun_mobile_ffi.verifyConvoySignature
@@ -77,6 +78,7 @@ class P2pManager(
     private var node: P2pNodeWrapper? = null
     private var subscription: GossipSubscriptionWrapper? = null
     private var receiverJob: Job? = null
+    private var purgeJob: Job? = null
     private val starting = java.util.concurrent.atomic.AtomicBoolean(false)
 
     // Persistent event store (disk-backed)
@@ -112,7 +114,9 @@ class P2pManager(
             val loadedEvents = eventStore.load()
             eventStore.purgeExpired()
             if (eventStore.size() != loadedEvents.size) {
-                eventStore.save()
+                if (!eventStore.save()) {
+                    throw IllegalStateException("Failed to persist normalized event store")
+                }
             }
             _events.value = eventStore.getAllIncludingDeleted()
             android.util.Log.i("P2pManager", "Loaded ${eventStore.size()} events from disk")
@@ -121,7 +125,9 @@ class P2pManager(
             voteStore = VoteStore(dataDir)
             voteStore.load()
             voteStore.purgeExpired()
-            voteStore.save()
+            if (!voteStore.save()) {
+                throw IllegalStateException("Failed to persist normalized vote store")
+            }
             _votes.value = voteStore.getAll()
             android.util.Log.i("P2pManager", "Loaded votes from disk")
 
@@ -159,6 +165,7 @@ class P2pManager(
             android.util.Log.i("P2pManager", "P2P manager started successfully")
         } catch (e: Exception) {
             android.util.Log.e("P2pManager", "Failed to start: ${e.message}", e)
+            stop()
             _status.value = Status.OFFLINE
         } finally {
             starting.set(false)
@@ -252,15 +259,6 @@ class P2pManager(
 
                     when (message) {
                         is GossipMessage.Convoy -> {
-                            // Dedup check
-                            val dedupKey = "convoy:${parseEventDocumentId(message.data)}"
-                            if (!seenMessages.add(dedupKey)) {
-                                android.util.Log.d("P2pManager", "Skipping duplicate convoy")
-                                continue
-                            }
-                            seenMessagesOrder.add(dedupKey)
-                            trimSeenMessages()
-
                             android.util.Log.d("P2pManager", "Verifying signature for convoy...")
                             if (!verifyConvoySignature(message.data)) {
                                 android.util.Log.w("P2pManager", "Dropping event with invalid signature. Data preview: ${message.data.take(200)}")
@@ -269,6 +267,13 @@ class P2pManager(
                             android.util.Log.d("P2pManager", "Signature OK, parsing convoy event...")
                             val convoyEvent = parseEventDocument(message.data)
                             if (convoyEvent != null) {
+                                val dedupKey = "convoy:${convoyEvent.id}"
+                                if (!seenMessages.add(dedupKey)) {
+                                    android.util.Log.d("P2pManager", "Skipping duplicate convoy")
+                                    continue
+                                }
+                                seenMessagesOrder.add(dedupKey)
+                                trimSeenMessages()
                                 android.util.Log.i("P2pManager", "Adding convoy event: '${convoyEvent.event.title}' (id=${convoyEvent.id}, peer=${convoyEvent.peerId.take(8)})")
                                 addEvent(convoyEvent)
                             } else {
@@ -276,15 +281,6 @@ class P2pManager(
                             }
                         }
                         is GossipMessage.Tombstone -> {
-                            // Dedup check
-                            val dedupKey = "delete:${message.convoyId}:${message.peerId}:${message.revision}"
-                            if (!seenMessages.add(dedupKey)) {
-                                android.util.Log.d("P2pManager", "Skipping duplicate delete")
-                                continue
-                            }
-                            seenMessagesOrder.add(dedupKey)
-                            trimSeenMessages()
-
                             // Verify delete signature (matches desktop lib.rs:340-363)
                             if (!verifyDeleteSignature(message.peerId, message.convoyId, message.revision.toULong(), message.signature)) {
                                 android.util.Log.w("P2pManager", "Dropping delete with invalid signature")
@@ -297,6 +293,14 @@ class P2pManager(
                                 android.util.Log.w("P2pManager", "Delete rejected: peer_id doesn't match convoy author")
                                 continue
                             }
+
+                            val dedupKey = "delete:${message.convoyId}:${message.peerId}:${message.revision}"
+                            if (!seenMessages.add(dedupKey)) {
+                                android.util.Log.d("P2pManager", "Skipping duplicate delete")
+                                continue
+                            }
+                            seenMessagesOrder.add(dedupKey)
+                            trimSeenMessages()
 
                             android.util.Log.i("P2pManager", "Received delete for convoy: ${message.convoyId}")
                             removeEvent(message.convoyId, message.revision, message.peerId, message.signature)
@@ -330,8 +334,11 @@ class P2pManager(
                             if (!verifyProfileSignature(message.data)) continue
                             val profile = parseProfileRecord(message.data) ?: continue
                             if (profileStore.upsert(profile)) {
-                                profileStore.save()
-                                _profiles.value = profileStore.getAll()
+                                if (profileStore.save()) {
+                                    _profiles.value = profileStore.getAll()
+                                } else {
+                                    android.util.Log.e("P2pManager", "Failed to persist profile store")
+                                }
                             }
                         }
                         is GossipMessage.Blacklist -> {
@@ -367,8 +374,11 @@ class P2pManager(
             return
         }
 
-        eventStore.save()
-        _events.value = eventStore.getAllIncludingDeleted()
+        if (eventStore.save()) {
+            _events.value = eventStore.getAllIncludingDeleted()
+        } else {
+            android.util.Log.e("P2pManager", "Failed to persist event store after add")
+        }
 
         val totalEvents = _events.value.size
         if (shouldDisplayEvent(event, prefs.blockedAuthors.value.keys, prefs.filteredLanguages.value)) {
@@ -393,11 +403,15 @@ class P2pManager(
                 signature = existing.signature
             )
         } else {
+            val now = kotlinx.datetime.Clock.System.now()
+            val nowIso = now.toString()
             EventDocument(
                 id = convoyId,
                 peerId = authorPeerId,
                 revision = revision,
-                publishedAt = 0,
+                createdAt = nowIso,
+                updatedAt = nowIso,
+                publishedAt = now.epochSeconds,
                 event = com.convoyrama.convoyrun.model.EventData(),
                 schedule = com.convoyrama.convoyrun.model.Schedule(),
                 signature = "",
@@ -407,8 +421,11 @@ class P2pManager(
         }
 
         if (eventStore.upsert(deletedEvent)) {
-            eventStore.save()
-            _events.value = eventStore.getAllIncludingDeleted()
+            if (eventStore.save()) {
+                _events.value = eventStore.getAllIncludingDeleted()
+            } else {
+                android.util.Log.e("P2pManager", "Failed to persist event store after delete")
+            }
         }
     }
 
@@ -422,8 +439,11 @@ class P2pManager(
             return
         }
         if (!voteStore.upsert(vote)) return
-        voteStore.save()
-        _votes.value = voteStore.getAll()
+        if (voteStore.save()) {
+            _votes.value = voteStore.getAll()
+        } else {
+            android.util.Log.e("P2pManager", "Failed to persist vote store after add")
+        }
         // Update myVotes if it's from this peer
         val myPeerId = node?.peerId()?.let(::otesAuthorId) ?: return
         if (vote.authorId == myPeerId) {
@@ -482,8 +502,11 @@ class P2pManager(
 
         // Store locally
         voteStore.upsert(voteRecord)
-        voteStore.save()
-        _votes.value = voteStore.getAll()
+        if (voteStore.save()) {
+            _votes.value = voteStore.getAll()
+        } else {
+            android.util.Log.e("P2pManager", "Failed to persist vote store after local vote")
+        }
         _myVotes.value = voteStore.getMyVotes(authorId)
 
         // Broadcast to network
@@ -546,12 +569,14 @@ class P2pManager(
     }
 
     private fun purgeExpiredEvents() {
-        val cutoff = kotlinx.datetime.Clock.System.now().epochSeconds - (3 * 86400)
+        val now = kotlinx.datetime.Clock.System.now().epochSeconds
         _events.update { current ->
-            current.filter { it.schedule.meetingTimestamp >= cutoff }
+            current.filter { it.retentionDeadline() >= now }
         }
         eventStore.purgeExpired()
-        eventStore.save()
+        if (!eventStore.save()) {
+            android.util.Log.e("P2pManager", "Failed to persist purge results")
+        }
     }
 
     /**
@@ -620,13 +645,17 @@ class P2pManager(
      * Start periodic purge of expired events (every 1 hour, matches desktop).
      */
     private fun startPeriodicPurge() {
-        scope.launch {
+        purgeJob?.cancel()
+        purgeJob = scope.launch {
             while (isActive) {
                 delay(PURGE_INTERVAL_MS)
                 try {
                     eventStore.purgeExpired()
-                    eventStore.save()
-                    _events.value = eventStore.getAllIncludingDeleted()
+                    if (eventStore.save()) {
+                        _events.value = eventStore.getAllIncludingDeleted()
+                    } else {
+                        android.util.Log.e("P2pManager", "Periodic purge save failed")
+                    }
                     android.util.Log.d("P2pManager", "Periodic purge done, ${eventStore.size()} events remaining")
                 } catch (e: Exception) {
                     android.util.Log.e("P2pManager", "Periodic purge error: ${e.message}")
@@ -748,14 +777,20 @@ class P2pManager(
         starting.set(false)
         receiverJob?.cancel()
         receiverJob = null
+        purgeJob?.cancel()
+        purgeJob = null
 
         // Flush event store and vote store to disk before shutdown
         try {
             if (::eventStore.isInitialized) {
-                eventStore.save()
+                if (!eventStore.save()) {
+                    android.util.Log.e("P2pManager", "Event store save failed during stop")
+                }
             }
             if (::voteStore.isInitialized) {
-                voteStore.save()
+                if (!voteStore.save()) {
+                    android.util.Log.e("P2pManager", "Vote store save failed during stop")
+                }
             }
         } catch (e: Exception) {
             android.util.Log.e("P2pManager", "Error saving stores: ${e.message}")
@@ -790,7 +825,10 @@ class P2pManager(
             seenMessages.clear()
             seenMessagesOrder.clear()
         }
-        File(context.filesDir, "p2p").deleteRecursively()
+        val p2pDir = File(context.filesDir, "p2p")
+        if (p2pDir.exists() && !p2pDir.deleteRecursively()) {
+            throw IllegalStateException("Failed to delete ${p2pDir.absolutePath}")
+        }
         start()
     }
 

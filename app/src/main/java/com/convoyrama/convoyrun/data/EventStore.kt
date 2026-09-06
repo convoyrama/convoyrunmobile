@@ -2,6 +2,8 @@ package com.convoyrama.convoyrun.data
 
 import com.convoyrama.convoyrun.model.EventDocument
 import com.convoyrama.convoyrun.model.winsOver
+import com.convoyrama.convoyrun.model.normalized
+import com.convoyrama.convoyrun.model.retentionDeadline
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -40,10 +42,18 @@ class EventStore(private val dataDir: File) {
             return try {
                 val json = storeFile.readText()
                 val map: Map<String, EventDocument> = lenientJson.decodeFromString(json)
-                events.putAll(map)
+                map.values.forEach { event ->
+                    val normalized = event.normalized()
+                    events[normalized.id] = normalized
+                }
+                dirty.set(true)
+                if (!save()) {
+                    android.util.Log.e("EventStore", "Failed to persist normalized load")
+                }
                 events.values.sortedBy { it.schedule.meetingTimestamp }
             } catch (e: Exception) {
                 android.util.Log.e("EventStore", "Failed to load, starting fresh: ${e.message}")
+                quarantineCorruptStore(storeFile, "event-store")
                 events.clear()
                 emptyList()
             }
@@ -53,16 +63,18 @@ class EventStore(private val dataDir: File) {
     /**
      * Persist current in-memory state to disk atomically.
      */
-    fun save() {
+    fun save(): Boolean {
         synchronized(events) {
-            if (!dirty.get()) return
+            if (!dirty.get()) return true
             try {
                 val json = lenientJson.encodeToString(events)
                 tmpFile.writeText(json)
-                require(tmpFile.renameTo(storeFile)) { "Failed to rename temp events file" }
+                replaceStoreFile(tmpFile, storeFile)
                 dirty.set(false)
+                true
             } catch (e: Exception) {
                 android.util.Log.e("EventStore", "Failed to save: ${e.message}")
+                false
             }
         }
     }
@@ -72,11 +84,12 @@ class EventStore(private val dataDir: File) {
      */
     fun upsert(event: EventDocument): Boolean {
         synchronized(events) {
-            val current = events[event.id]
-            if (current != null && !event.winsOver(current)) {
+            val normalized = event.normalized()
+            val current = events[normalized.id]
+            if (current != null && !normalized.winsOver(current)) {
                 return false
             }
-            events[event.id] = event
+            events[normalized.id] = normalized
             dirty.set(true)
             return true
         }
@@ -110,10 +123,9 @@ class EventStore(private val dataDir: File) {
      */
     fun purgeExpired() {
         val now = kotlinx.datetime.Clock.System.now().epochSeconds
-        val cutoff = now - (RETENTION_DAYS * 86400)
         synchronized(events) {
             val before = events.size
-            events.entries.removeIf { it.value.schedule.meetingTimestamp < cutoff }
+            events.entries.removeIf { it.value.retentionDeadline() < now }
             if (events.size != before) {
                 dirty.set(true)
                 android.util.Log.i("EventStore", "Purged ${before - events.size} expired events")
@@ -150,7 +162,6 @@ class EventStore(private val dataDir: File) {
     }
 
     companion object {
-        private const val RETENTION_DAYS = 3L
         private val lenientJson = Json { ignoreUnknownKeys = true }
     }
 }

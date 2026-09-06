@@ -16,7 +16,10 @@ class ProfileStore(dataDir: File) {
         profiles.clear()
         if (storeFile.exists()) runCatching {
             profiles.putAll(json.decodeFromString<Map<String, ProfileRecord>>(storeFile.readText()))
-        }.onFailure { profiles.clear() }
+        }.onFailure {
+            quarantineCorruptStore(storeFile, "profile-store")
+            profiles.clear()
+        }
         profiles.toMap()
     }
 
@@ -36,7 +39,7 @@ class ProfileStore(dataDir: File) {
         if (!dirty) return true
         runCatching {
             tmpFile.writeText(json.encodeToString(profiles))
-            check(tmpFile.renameTo(storeFile))
+            replaceStoreFile(tmpFile, storeFile)
             dirty = false
         }.isSuccess
     }

@@ -40,7 +40,7 @@ data class EventDocument(
     @Transient val schedule: Schedule = Schedule(),
     @Transient val channel: String = "",
     @Transient val flyer: FlyerData? = null,
-    @Transient val deleted: Boolean = false
+    val deleted: Boolean = false
 )
 
 @Serializable
@@ -255,6 +255,7 @@ private fun normalizeEventDocument(event: EventDocument): EventDocument {
         publishedAt = publishedAt,
         schedule = schedule,
         flyer = event.event.flyer,
+        deleted = event.deleted,
         event = event.event.copy(
             schedule = schedule,
             route = route,
@@ -263,6 +264,8 @@ private fun normalizeEventDocument(event: EventDocument): EventDocument {
         )
     )
 }
+
+fun EventDocument.normalized(): EventDocument = normalizeEventDocument(this)
 
 fun parseEventDocument(json: String): EventDocument? {
     return try {
@@ -331,9 +334,17 @@ fun ProfileRecord.winsOver(current: ProfileRecord): Boolean =
         (revision == current.revision && signature > current.signature)
 
 fun EventDocument.winsOver(current: EventDocument): Boolean =
-    revision > current.revision ||
-        (revision == current.revision && deleted != current.deleted && deleted) ||
-        (revision == current.revision && deleted == current.deleted && signature > current.signature)
+    authorId == current.authorId && (
+        revision > current.revision ||
+            (revision == current.revision && deleted != current.deleted && deleted) ||
+            (revision == current.revision && deleted == current.deleted && signature > current.signature)
+    )
+
+fun EventDocument.retentionTimestamp(): Long =
+    if (deleted) publishedAt.takeIf { it > 0 } ?: schedule.meetingTimestamp else schedule.meetingTimestamp
+
+fun EventDocument.retentionDeadline(): Long =
+    retentionTimestamp() + if (deleted) 7 * 86400 else 3 * 86400
 
 fun parseProfileRecord(json: String): ProfileRecord? = runCatching {
     lenientJson.decodeFromString<ProfileRecord>(json)

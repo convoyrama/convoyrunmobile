@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import com.convoyrama.convoyrun.ui.theme.DEFAULT_THEME_NAME
 
 class PreferencesManager(context: Context) {
 
@@ -19,6 +20,9 @@ class PreferencesManager(context: Context) {
 
     private val _nickname = MutableStateFlow(prefs.getString("nickname", "") ?: "")
     val nickname: StateFlow<String> = _nickname.asStateFlow()
+
+    private val _appTheme = MutableStateFlow(prefs.getString("app_theme", DEFAULT_THEME_NAME) ?: DEFAULT_THEME_NAME)
+    val appTheme: StateFlow<String> = _appTheme.asStateFlow()
 
     init {
         loadBlockedAuthors()
@@ -38,6 +42,18 @@ class PreferencesManager(context: Context) {
             editor.putString("app_language", language)
         }
         editor.apply()
+    }
+
+    fun getAppTheme(): String =
+        prefs.getString("app_theme", DEFAULT_THEME_NAME) ?: DEFAULT_THEME_NAME
+
+    fun setAppTheme(theme: String) {
+        val normalized = when (theme.lowercase()) {
+            "graphite", "dawn", "paper" -> theme.lowercase()
+            else -> DEFAULT_THEME_NAME
+        }
+        prefs.edit().putString("app_theme", normalized).apply()
+        _appTheme.value = normalized
     }
 
     fun saveNickname(value: String): Boolean {
@@ -110,5 +126,6 @@ class PreferencesManager(context: Context) {
         _blockedAuthors.value = emptyMap()
         _filteredLanguages.value = emptySet()
         _nickname.value = ""
+        _appTheme.value = DEFAULT_THEME_NAME
     }
 }

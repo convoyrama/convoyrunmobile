@@ -291,6 +291,30 @@ pub fn parse_gossip_message(json: &str) -> Option<GossipMessage> {
     None
 }
 
+fn decode_peer_id_bytes(peer_id: &str) -> Option<[u8; 32]> {
+    use base64::Engine;
+
+    let trimmed = peer_id.strip_prefix("ed25519:").unwrap_or(peer_id);
+    if trimmed.len() == 64 && trimmed.chars().all(|c| c.is_ascii_hexdigit()) {
+        return hex::decode(trimmed).ok()?.try_into().ok();
+    }
+    let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(trimmed)
+        .or_else(|_| base64::engine::general_purpose::STANDARD.decode(trimmed))
+        .ok()?;
+    decoded.try_into().ok()
+}
+
+fn decode_signature_bytes(signature_b64: &str) -> Option<[u8; 64]> {
+    use base64::Engine;
+
+    let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(signature_b64)
+        .or_else(|_| base64::engine::general_purpose::STANDARD.decode(signature_b64))
+        .ok()?;
+    decoded.try_into().ok()
+}
+
 /// Verify the ed25519 signature of a convoy event JSON.
 /// Returns true if the signature is valid, false otherwise.
 pub fn verify_convoy_signature(convoy_json: &str) -> bool {
@@ -321,7 +345,8 @@ pub fn verify_convoy_signature(convoy_json: &str) -> bool {
     // Clear signature for canonical form
     obj.insert("signature".to_string(), serde_json::Value::String(String::new()));
 
-    // Remove 'deleted' field if present — desktop signs without it (#[serde(skip)])
+    // Strip local tombstone metadata from the signed payload; it is persisted locally
+    // but excluded from the canonical event signature.
     obj.remove("deleted");
     obj.remove("deleteSignature");
     if obj.get("revision").and_then(|v| v.as_u64()) == Some(1) {
@@ -330,27 +355,14 @@ pub fn verify_convoy_signature(convoy_json: &str) -> bool {
 
     let canonical = canonical_json(&value);
 
-    // Decode peer_id — supports both hex (desktop format) and base64
-    let peer_id_text = peer_id_b64.strip_prefix("ed25519:").unwrap_or(&peer_id_b64);
-
-    let peer_id_bytes = if peer_id_text.len() == 64 && peer_id_text.chars().all(|c| c.is_ascii_hexdigit()) {
-        // Hex format (desktop)
-        match hex::decode(peer_id_text) {
-            Ok(b) if b.len() == 32 => b,
-            _ => return false,
-        }
-    } else {
-        // Base64 format
-        match base64::engine::general_purpose::STANDARD.decode(peer_id_text) {
-            Ok(b) if b.len() == 32 => b,
-            _ => return false,
-        }
+    let peer_id_bytes = match decode_peer_id_bytes(&peer_id_b64) {
+        Some(bytes) => bytes,
+        None => return false,
     };
 
-    // Decode signature
-    let sig_bytes = match base64::engine::general_purpose::STANDARD.decode(&signature_b64) {
-        Ok(b) if b.len() == 64 => b,
-        _ => return false,
+    let sig_bytes = match decode_signature_bytes(&signature_b64) {
+        Some(bytes) => bytes,
+        None => return false,
     };
 
     let mut key_array = [0u8; 32];
@@ -643,8 +655,7 @@ pub fn verify_profile_signature(profile_json: &str) -> bool {
         created.ends_with('Z') && updated.ends_with('Z'),
     )));
     if !timestamps.is_some_and(|(created, updated, utc)| utc && created <= updated) { return false; }
-    let public: [u8; 32] = match base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(&author_id[8..]).ok().and_then(|bytes| bytes.try_into().ok()) {
+    let public = match decode_peer_id_bytes(author_id) {
         Some(bytes) => bytes,
         None => return false,
     };
@@ -652,8 +663,7 @@ pub fn verify_profile_signature(profile_json: &str) -> bool {
         Some(signature) => signature,
         None => return false,
     };
-    let signature: [u8; 64] = match base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(signature_text).ok().and_then(|bytes| bytes.try_into().ok()) {
+    let signature = match decode_signature_bytes(&signature_text) {
         Some(bytes) => bytes,
         None => return false,
     };
@@ -689,23 +699,14 @@ pub fn verify_blacklist_signature(blacklist_json: &str) -> bool {
         _ => return false,
     };
 
-    // Decode peer_id — supports hex (64 chars) and base64
-    let peer_id_bytes = if author_peer_id.len() == 64 && author_peer_id.chars().all(|c| c.is_ascii_hexdigit()) {
-        match hex::decode(&author_peer_id) {
-            Ok(b) if b.len() == 32 => b,
-            _ => return false,
-        }
-    } else {
-        match base64::engine::general_purpose::STANDARD.decode(&author_peer_id) {
-            Ok(b) if b.len() == 32 => b,
-            _ => return false,
-        }
+    let peer_id_bytes = match decode_peer_id_bytes(&author_peer_id) {
+        Some(bytes) => bytes,
+        None => return false,
     };
 
-    // Decode signature
-    let sig_bytes = match base64::engine::general_purpose::STANDARD.decode(&signature_b64) {
-        Ok(b) if b.len() == 64 => b,
-        _ => return false,
+    let sig_bytes = match decode_signature_bytes(&signature_b64) {
+        Some(bytes) => bytes,
+        None => return false,
     };
 
     // Rebuild canonical JSON
@@ -731,25 +732,15 @@ pub fn verify_delete_signature(peer_id: &str, convoy_id: &str, revision: u64, si
     use base64::Engine;
     use ed25519_dalek::{Verifier, VerifyingKey};
 
-    let peer_id = peer_id.strip_prefix("ed25519:").unwrap_or(peer_id);
-
-    // Decode peer_id — supports hex (64 chars) and base64
-    let peer_id_bytes = if peer_id.len() == 64 && peer_id.chars().all(|c| c.is_ascii_hexdigit()) {
-        match hex::decode(peer_id) {
-            Ok(b) if b.len() == 32 => b,
-            _ => return false,
-        }
-    } else {
-        match base64::engine::general_purpose::STANDARD.decode(peer_id) {
-            Ok(b) if b.len() == 32 => b,
-            _ => return false,
-        }
+    let peer_id = peer_id.trim();
+    let peer_id_bytes = match decode_peer_id_bytes(peer_id) {
+        Some(bytes) => bytes,
+        None => return false,
     };
 
-    // Decode signature
-    let sig_bytes = match base64::engine::general_purpose::STANDARD.decode(signature_b64) {
-        Ok(b) if b.len() == 64 => b,
-        _ => return false,
+    let sig_bytes = match decode_signature_bytes(signature_b64) {
+        Some(bytes) => bytes,
+        None => return false,
     };
 
     // Reconstruct the signed message

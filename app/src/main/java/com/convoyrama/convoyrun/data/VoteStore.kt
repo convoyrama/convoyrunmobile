@@ -45,6 +45,7 @@ class VoteStore(private val dataDir: File) {
                 toListMap()
             } catch (e: Exception) {
                 android.util.Log.e("VoteStore", "Failed to load, starting fresh: ${e.message}")
+                quarantineCorruptStore(storeFile, "vote-store")
                 votes.clear()
                 emptyMap()
             }
@@ -54,16 +55,18 @@ class VoteStore(private val dataDir: File) {
     /**
      * Persist current in-memory state to disk atomically.
      */
-    fun save() {
+    fun save(): Boolean {
         synchronized(votes) {
-            if (!dirty.get()) return
+            if (!dirty.get()) return true
             try {
                 val json = lenientJson.encodeToString(votes)
                 tmpFile.writeText(json)
-                require(tmpFile.renameTo(storeFile)) { "Failed to rename temp votes file" }
+                replaceStoreFile(tmpFile, storeFile)
                 dirty.set(false)
+                true
             } catch (e: Exception) {
                 android.util.Log.e("VoteStore", "Failed to save: ${e.message}")
+                false
             }
         }
     }

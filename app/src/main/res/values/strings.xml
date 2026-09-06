@@ -54,6 +54,13 @@
     <string name="settings_lang_group">App Language</string>
     <string name="settings_lang_label">Language</string>
     <string name="settings_lang_sub">Override system language</string>
+    <string name="settings_theme_group">Theme</string>
+    <string name="settings_theme_label">Visual theme</string>
+    <string name="settings_theme_sub">Choose the palette that fits the way you use the app</string>
+    <string name="settings_theme_ocean">Ocean</string>
+    <string name="settings_theme_graphite">Graphite</string>
+    <string name="settings_theme_dawn">Dawn</string>
+    <string name="settings_theme_paper">Paper</string>
     <string name="settings_filter_group">Filter Events by Language</string>
     <string name="settings_blocked_group">Blocked Authors</string>
     <string name="settings_blocked_empty">No blocked authors</string>
@@ -92,8 +99,8 @@
     <!-- Calendar collapse -->
     <string name="calendar_collapse_hint">Drag or tap to collapse the calendar</string>
     <string name="calendar_expand_hint">Drag or tap to expand the calendar</string>
-    <string name="calendar_collapse">Collapse</string>
-    <string name="calendar_expand">Expand</string>
+    <string name="calendar_collapse">Hide calendar</string>
+    <string name="calendar_expand">Show calendar</string>
     <string name="calendar_collapsed_selected">Selected: %1$s. %2$d events.</string>
     <string name="calendar_collapsed_no_selection">Tap a day to focus the event list.</string>
 </resources>

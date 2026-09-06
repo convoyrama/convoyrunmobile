@@ -3,7 +3,6 @@ package com.convoyrama.convoyrun
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -14,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -40,13 +40,15 @@ class MainActivity : AppCompatActivity() {
             val prefs = PreferencesManager(applicationContext)
             prefsManager = prefs
             p2pManager = P2pManager(applicationContext, prefs)
+            setThemePalette(prefs.getAppTheme())
             android.util.Log.i("MainActivity", "Init OK, nativeLoaded=${P2pManager.nativeLoaded}")
         } catch (e: Exception) {
             android.util.Log.e("MainActivity", "Init failed: ${e.message}", e)
         }
 
         setContent {
-            ConvoyRunTheme {
+            val appTheme = prefsManager?.appTheme?.collectAsStateWithLifecycle()?.value ?: DEFAULT_THEME_NAME
+            ConvoyRunTheme(themeName = appTheme) {
                 ConvoyRunApp(p2pManager, prefsManager)
             }
         }
@@ -119,14 +121,8 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
     val upcomingEvents = remember(events?.value, blockedAuthors?.value, filteredLanguages?.value) {
         p2pManager?.getUpcomingEvents(7) ?: emptyList()
     }
-    val calendarWeight by animateFloatAsState(
-        targetValue = if (calendarExpanded) 0.35f else 0.16f,
-        label = "calendarWeight"
-    )
-    val listWeight by animateFloatAsState(
-        targetValue = if (calendarExpanded) 0.65f else 0.84f,
-        label = "listWeight"
-    )
+    val calendarWeight = 0.35f
+    val listWeight = if (calendarExpanded) 0.65f else 1f
 
     Scaffold(
         topBar = {
@@ -180,18 +176,40 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
                 .padding(paddingValues)
                 .windowInsetsPadding(WindowInsets.navigationBars)
         ) {
-            CalendarView(
-                events = p2pManager?.getAllEvents() ?: emptyList(),
-                onDaySelected = { selectedDay = it },
-                selectedDay = selectedDay,
-                expanded = calendarExpanded,
-                onToggleExpanded = { calendarExpanded = !calendarExpanded },
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(calendarWeight)
-            )
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                    TextButton(
+                    onClick = { calendarExpanded = !calendarExpanded },
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = if (calendarExpanded) {
+                            stringResource(R.string.calendar_collapse)
+                        } else {
+                            stringResource(R.string.calendar_expand)
+                        },
+                        color = Accent,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
 
-            HorizontalDivider(color = Divider, thickness = 1.dp)
+            if (calendarExpanded) {
+                CalendarView(
+                    events = p2pManager?.getAllEvents() ?: emptyList(),
+                    onDaySelected = { selectedDay = it },
+                    selectedDay = selectedDay,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(calendarWeight)
+                )
+
+                HorizontalDivider(color = Divider, thickness = 1.dp)
+            }
 
             EventListView(
                 todayEvents = if (isTodaySelected) todayEvents else dayEvents,

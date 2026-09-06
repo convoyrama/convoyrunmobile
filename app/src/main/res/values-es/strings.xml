@@ -51,6 +51,13 @@
     <string name="settings_lang_group">Idioma de la App</string>
     <string name="settings_lang_label">Idioma</string>
     <string name="settings_lang_sub">Reemplazar idioma del sistema</string>
+    <string name="settings_theme_group">Tema</string>
+    <string name="settings_theme_label">Tema visual</string>
+    <string name="settings_theme_sub">Elegí la paleta que mejor se adapte al uso de la app</string>
+    <string name="settings_theme_ocean">Ocean</string>
+    <string name="settings_theme_graphite">Graphite</string>
+    <string name="settings_theme_dawn">Dawn</string>
+    <string name="settings_theme_paper">Paper</string>
     <string name="settings_filter_group">Filtrar Eventos por Idioma</string>
     <string name="settings_blocked_group">Autores Bloqueados</string>
     <string name="settings_blocked_empty">No hay autores bloqueados</string>
@@ -89,8 +96,8 @@
     <!-- Calendar collapse -->
     <string name="calendar_collapse_hint">Arrastra o toca para colapsar el calendario</string>
     <string name="calendar_expand_hint">Arrastra o toca para desplegar el calendario</string>
-    <string name="calendar_collapse">Colapsar</string>
-    <string name="calendar_expand">Desplegar</string>
+    <string name="calendar_collapse">Ocultar calendario</string>
+    <string name="calendar_expand">Mostrar calendario</string>
     <string name="calendar_collapsed_selected">Seleccionado: %1$s. %2$d eventos.</string>
     <string name="calendar_collapsed_no_selection">Toca un día para enfocarte en la lista de eventos.</string>
 </resources>

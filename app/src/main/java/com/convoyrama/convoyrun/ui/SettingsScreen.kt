@@ -36,6 +36,7 @@ fun SettingsScreen(
 ) {
     val blockedAuthors by prefsManager.blockedAuthors.collectAsState()
     val filteredLanguages by prefsManager.filteredLanguages.collectAsState()
+    val appTheme by prefsManager.appTheme.collectAsState()
     val allEvents = p2pManager.getAllEvents()
 
     var currentLang by remember { mutableStateOf(prefsManager.getAppLanguage()) }
@@ -48,6 +49,12 @@ fun SettingsScreen(
 
     // UI languages: only 3 (es, en, pt)
     val uiLanguages = listOf("es", "en", "pt")
+    val themeOptions = listOf(
+        "ocean" to stringResource(R.string.settings_theme_ocean),
+        "graphite" to stringResource(R.string.settings_theme_graphite),
+        "dawn" to stringResource(R.string.settings_theme_dawn),
+        "paper" to stringResource(R.string.settings_theme_paper),
+    )
 
     // Event language filter: all 21 from desktop
     val eventLanguages = listOf(
@@ -185,6 +192,40 @@ fun SettingsScreen(
                                         val locales = LocaleListCompat.forLanguageTags(lang)
                                         AppCompatDelegate.setApplicationLocales(locales)
                                     }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            item {
+                GroupLabel(stringResource(R.string.settings_theme_group))
+            }
+            item {
+                Card(colors = CardDefaults.cardColors(containerColor = BgCard)) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Text(
+                            text = stringResource(R.string.settings_theme_label),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = stringResource(R.string.settings_theme_sub),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextMuted
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            themeOptions.forEach { (themeKey, label) ->
+                                ThemeChip(
+                                    label = label,
+                                    selected = appTheme == themeKey,
+                                    onClick = { prefsManager.setAppTheme(themeKey) }
                                 )
                             }
                         }
@@ -353,6 +394,7 @@ fun SettingsScreen(
                             p2pManager.resetLocalData()
                             currentLang = null
                             selectedLangs = emptySet()
+                            prefsManager.setAppTheme(DEFAULT_THEME_NAME)
                             nickname = prefsManager.nickname.value
                             nicknameError = false
                             nicknameSaved = false
@@ -388,6 +430,24 @@ private fun GroupLabel(text: String) {
 
 @Composable
 private fun LangChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(6.dp),
+        color = if (selected) Accent else androidx.compose.ui.graphics.Color.Transparent,
+        border = if (selected) null else androidx.compose.foundation.BorderStroke(1.dp, Divider),
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = if (selected) androidx.compose.ui.graphics.Color.White else TextSecondary,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+        )
+    }
+}
+
+@Composable
+private fun ThemeChip(label: String, selected: Boolean, onClick: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(6.dp),
         color = if (selected) Accent else androidx.compose.ui.graphics.Color.Transparent,
