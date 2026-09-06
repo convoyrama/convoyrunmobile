@@ -64,7 +64,7 @@ class EventStore(private val dataDir: File) {
      * Persist current in-memory state to disk atomically.
      */
     fun save(): Boolean {
-        synchronized(events) {
+        return synchronized(events) {
             if (!dirty.get()) return true
             try {
                 val json = lenientJson.encodeToString(events)

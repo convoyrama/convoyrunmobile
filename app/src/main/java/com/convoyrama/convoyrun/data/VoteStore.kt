@@ -56,7 +56,7 @@ class VoteStore(private val dataDir: File) {
      * Persist current in-memory state to disk atomically.
      */
     fun save(): Boolean {
-        synchronized(votes) {
+        return synchronized(votes) {
             if (!dirty.get()) return true
             try {
                 val json = lenientJson.encodeToString(votes)
