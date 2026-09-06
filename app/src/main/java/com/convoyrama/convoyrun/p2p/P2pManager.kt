@@ -286,7 +286,7 @@ class P2pManager(
                             trimSeenMessages()
 
                             // Verify delete signature (matches desktop lib.rs:340-363)
-                            if (!verifyDeleteSignature(message.peerId, message.convoyId, message.revision, message.signature)) {
+                            if (!verifyDeleteSignature(message.peerId, message.convoyId, message.revision.toULong(), message.signature)) {
                                 android.util.Log.w("P2pManager", "Dropping delete with invalid signature")
                                 continue
                             }

@@ -1,6 +1,7 @@
 package com.convoyrama.convoyrun.data
 
 import com.convoyrama.convoyrun.model.ConvoyEvent
+import com.convoyrama.convoyrun.model.winsOver
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
