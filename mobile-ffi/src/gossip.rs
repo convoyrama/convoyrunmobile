@@ -4,6 +4,7 @@
 //! Events are received, parsed, and passed to Kotlin for persistence and re-broadcast.
 
 use serde::{Deserialize, Serialize};
+use base64::Engine;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use tokio::sync::Mutex;
@@ -306,8 +307,6 @@ fn decode_peer_id_bytes(peer_id: &str) -> Option<[u8; 32]> {
 }
 
 fn decode_signature_bytes(signature_b64: &str) -> Option<[u8; 64]> {
-    use base64::Engine;
-
     let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD
         .decode(signature_b64)
         .or_else(|_| base64::engine::general_purpose::STANDARD.decode(signature_b64))
@@ -318,7 +317,6 @@ fn decode_signature_bytes(signature_b64: &str) -> Option<[u8; 64]> {
 /// Verify the ed25519 signature of a convoy event JSON.
 /// Returns true if the signature is valid, false otherwise.
 pub fn verify_convoy_signature(convoy_json: &str) -> bool {
-    use base64::Engine;
     use ed25519_dalek::{Verifier, VerifyingKey};
 
     let mut value: serde_json::Value = match serde_json::from_str(convoy_json) {
@@ -615,7 +613,6 @@ pub fn sign_profile(
 }
 
 pub fn verify_profile_signature(profile_json: &str) -> bool {
-    use base64::Engine;
     use ed25519_dalek::{Verifier, VerifyingKey};
 
     if profile_json.len() > 262_144 { return false; }
@@ -676,7 +673,6 @@ pub fn verify_profile_signature(profile_json: &str) -> bool {
 /// Verify the ed25519 signature of a blacklist record JSON.
 /// Returns true if the signature is valid.
 pub fn verify_blacklist_signature(blacklist_json: &str) -> bool {
-    use base64::Engine;
     use ed25519_dalek::{Verifier, VerifyingKey};
 
     let mut value: serde_json::Value = match serde_json::from_str(blacklist_json) {
@@ -729,7 +725,6 @@ pub fn verify_blacklist_signature(blacklist_json: &str) -> bool {
 /// Verify the ed25519 signature of a delete convoy message.
 /// The signed message format is "{convoy_id}:{peer_id}:{revision}".
 pub fn verify_delete_signature(peer_id: &str, convoy_id: &str, revision: u64, signature_b64: &str) -> bool {
-    use base64::Engine;
     use ed25519_dalek::{Verifier, VerifyingKey};
 
     let peer_id = peer_id.trim();
