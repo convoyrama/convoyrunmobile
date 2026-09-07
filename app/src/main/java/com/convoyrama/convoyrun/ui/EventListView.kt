@@ -77,11 +77,11 @@ fun EventListView(
             onValueChange = { searchQuery = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = 12.dp, vertical = 4.dp),
             placeholder = {
                 Text(
                     text = stringResource(R.string.search_events),
-                    style = MaterialTheme.typography.labelSmall
+                    style = MaterialTheme.typography.bodySmall
                 )
             },
             leadingIcon = {
@@ -89,12 +89,12 @@ fun EventListView(
                     imageVector = Icons.Default.Search,
                     contentDescription = null,
                     tint = TextMuted,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(16.dp)
                 )
             },
             singleLine = true,
-            shape = RoundedCornerShape(10.dp),
-            textStyle = MaterialTheme.typography.labelSmall,
+            shape = RoundedCornerShape(8.dp),
+            textStyle = MaterialTheme.typography.bodySmall,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Accent,
                 unfocusedBorderColor = Divider,
@@ -328,47 +328,31 @@ private fun EventCard(
 
             // Votes row
             Spacer(modifier = Modifier.height(4.dp))
+            val totalVotes = voteUp + voteDown
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                TextButton(
-                    onClick = { if (!isOwnEvent) onVote(1) },
+                VoteChip(
+                    symbol = VoteSymbolUp,
+                    selected = myVote == 1,
                     enabled = !isOwnEvent,
-                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp),
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = if (myVote == 1) Accent else TextMuted
-                    ),
-                    modifier = Modifier.height(24.dp)
-                    ) {
-                        Text(
-                        text = VoteSymbolUp,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                Text(
-                    text = "${VoteSymbolUp} $voteUp ${VoteSymbolDown} $voteDown",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextSecondary,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold
+                    onClick = { if (!isOwnEvent) onVote(1) }
                 )
-                TextButton(
-                    onClick = { if (!isOwnEvent) onVote(-1) },
+                Text(
+                    text = totalVotes.toString(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextSecondary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(horizontal = 2.dp)
+                )
+                VoteChip(
+                    symbol = VoteSymbolDown,
+                    selected = myVote == -1,
                     enabled = !isOwnEvent,
-                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp),
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = if (myVote == -1) Accent else TextMuted
-                    ),
-                    modifier = Modifier.height(24.dp)
-                ) {
-                    Text(
-                        text = VoteSymbolDown,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                    onClick = { if (!isOwnEvent) onVote(-1) }
+                )
                 if (isOwnEvent) {
                     Text(
                         text = stringResource(R.string.vote_self_hint),
@@ -413,6 +397,35 @@ private fun resolveDisplayNickname(event: EventDocument, profiles: Map<String, P
         profileNick.isNotEmpty() -> profileNick
         event.nickname.isNotEmpty() -> event.nickname
         else -> ""
+    }
+}
+
+@Composable
+private fun VoteChip(
+    symbol: String,
+    selected: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = if (selected) Accent.copy(alpha = 0.2f) else BgSecondary,
+        border = if (selected) null else BorderStroke(1.dp, Divider),
+        modifier = Modifier
+            .sizeIn(minWidth = 34.dp, minHeight = 30.dp)
+            .clickable(enabled = enabled, onClick = onClick)
+    ) {
+        Box(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = symbol,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (selected) Accent else TextMuted
+            )
+        }
     }
 }
 

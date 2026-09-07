@@ -70,7 +70,7 @@ class MainActivity : AppCompatActivity() {
 @Composable
 fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
     var showSettings by remember { mutableStateOf(false) }
-    var calendarExpanded by rememberSaveable { mutableStateOf(true) }
+    var calendarExpanded by rememberSaveable { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     if (showSettings && p2pManager != null && prefsManager != null) {
@@ -179,12 +179,13 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                    .padding(horizontal = 12.dp, vertical = 2.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-                    TextButton(
+                TextButton(
                     onClick = { calendarExpanded = !calendarExpanded },
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                    modifier = Modifier.heightIn(min = 28.dp)
                 ) {
                     Text(
                         text = if (calendarExpanded) {
@@ -193,7 +194,8 @@ fun ConvoyRunApp(p2pManager: P2pManager?, prefsManager: PreferencesManager?) {
                             stringResource(R.string.calendar_expand)
                         },
                         color = Accent,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.labelSmall
                     )
                 }
             }

@@ -137,17 +137,23 @@ fun SettingsScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(Modifier.height(8.dp))
-                        Button(onClick = {
-                            val ok = p2pManager.setNickname(nickname)
-                            nicknameError = !ok
-                            nicknameSaved = ok
-                        }) {
+                        Button(
+                            onClick = {
+                                val ok = p2pManager.setNickname(nickname)
+                                nicknameError = !ok
+                                nicknameSaved = ok
+                            },
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                            modifier = Modifier.heightIn(min = 36.dp)
+                        ) {
                             Text(
                                 text = if (nicknameSaved) {
                                     stringResource(R.string.settings_nickname_saved)
                                 } else {
                                     stringResource(R.string.settings_nickname_save)
-                                }
+                                },
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
